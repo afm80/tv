@@ -2,5 +2,12 @@
   "name": "alfaham-bot",
   "private": true,
   "type": "module",
-  "dependencies": { "firebase-admin": "^12.0.0" }
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "scripts": {
+    "test": "node --test test.mjs",
+    "sync": "node sync.mjs",
+    "dry": "node sync.mjs --dry"
+  }
 }
