@@ -54,9 +54,6 @@
   ],
   "allowedCategories": [],
   "blockNamePatterns": [
-    "bein",
-    "\\bssc\\b",
-    "\\bosn\\b",
     "shahid",
     "starzplay"
   ],
@@ -70,5 +67,228 @@
   "deleteAfterFailures": 2,
   "checkRetries": 1,
   "excludeCountries": [],
-  "createEmptyCountries": false
+  "createEmptyCountries": false,
+  "categorySections": [
+    {
+      "key": "news",
+      "names": [
+        "قنوات أخبار",
+        "قنوات الأخبار",
+        "القنوات الإخبارية"
+      ],
+      "categories": [
+        "news"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "documentary",
+      "names": [
+        "قنوات وثائقية",
+        "القنوات الوثائقية"
+      ],
+      "categories": [
+        "documentary"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "religious",
+      "names": [
+        "قنوات دينية",
+        "القنوات الدينية"
+      ],
+      "categories": [
+        "religious"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "cooking",
+      "names": [
+        "قنوات الطبخ",
+        "قنوات طبخ"
+      ],
+      "categories": [
+        "cooking"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "sports_arab",
+      "names": [
+        "الرياضة العربية"
+      ],
+      "categories": [
+        "sports"
+      ],
+      "scope": "arab"
+    },
+    {
+      "key": "sports_world",
+      "names": [
+        "الرياضة العالمية"
+      ],
+      "categories": [
+        "sports"
+      ],
+      "scope": "world"
+    },
+    {
+      "key": "kids",
+      "names": [
+        "قنوات أطفال",
+        "قنوات الأطفال"
+      ],
+      "categories": [
+        "kids",
+        "animation"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "entertainment",
+      "names": [
+        "قنوات ترفيهية",
+        "القنوات الترفيهية"
+      ],
+      "categories": [
+        "entertainment",
+        "comedy"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "movies",
+      "names": [
+        "قنوات أفلام",
+        "قنوات الأفلام"
+      ],
+      "categories": [
+        "movies",
+        "classic"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "series",
+      "names": [
+        "قنوات مسلسلات",
+        "قنوات المسلسلات"
+      ],
+      "categories": [
+        "series"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "music",
+      "names": [
+        "قنوات موسيقى",
+        "قنوات الموسيقى"
+      ],
+      "categories": [
+        "music"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "education",
+      "names": [
+        "قنوات تعليمية",
+        "القنوات التعليمية"
+      ],
+      "categories": [
+        "education",
+        "science"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "lifestyle",
+      "names": [
+        "قنوات أسلوب الحياة والسفر"
+      ],
+      "categories": [
+        "lifestyle",
+        "travel",
+        "outdoor",
+        "relax"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "business",
+      "names": [
+        "قنوات الأعمال والاقتصاد"
+      ],
+      "categories": [
+        "business"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "weather",
+      "names": [
+        "قنوات الطقس"
+      ],
+      "categories": [
+        "weather"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "shop",
+      "names": [
+        "قنوات التسوق"
+      ],
+      "categories": [
+        "shop"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "culture",
+      "names": [
+        "قنوات ثقافية",
+        "القنوات الثقافية"
+      ],
+      "categories": [
+        "culture"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "family",
+      "names": [
+        "قنوات عائلية",
+        "القنوات العائلية"
+      ],
+      "categories": [
+        "family"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "public",
+      "names": [
+        "قنوات حكومية وعامة",
+        "القنوات الحكومية"
+      ],
+      "categories": [
+        "public"
+      ],
+      "scope": "all"
+    },
+    {
+      "key": "auto",
+      "names": [
+        "قنوات السيارات"
+      ],
+      "categories": [
+        "auto"
+      ],
+      "scope": "all"
+    }
+  ]
 }
