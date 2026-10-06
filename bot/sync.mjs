@@ -26,9 +26,12 @@ const [channels, streams, logos, blocklist, cats, chans, botIgnore] = await Prom
 ]);
 console.log(`المصدر: ${channels.length} قناة، ${streams.length} رابط`);
 
-const check = url => checkStream(url, { origin: cfg.siteOrigin, requireCors: cfg.requireCors !== false });
+const countriesApi = await getJson(API + 'countries.json', true);
+const countryNames = Object.fromEntries((Array.isArray(countriesApi) ? countriesApi : []).map(c => [c.code, c.name]));
 
-const plan = await buildPlan({ api: { channels, streams, logos, blocklist }, cats, chans, cfg, check, only, ignore: new Set(Object.keys(botIgnore || {})) });
+const check = url => checkStream(url, { origin: cfg.siteOrigin, requireCors: cfg.requireCors !== false, timeoutMs: cfg.checkTimeoutMs || 8000 });
+
+const plan = await buildPlan({ api: { channels, streams, logos, blocklist }, cats, chans, cfg, check, only, countryNames, ignore: new Set(Object.keys(botIgnore || {})) });
 
 plan.log.forEach(l => console.log(l));
 console.table(plan.summary);
