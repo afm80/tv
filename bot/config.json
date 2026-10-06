@@ -79,7 +79,7 @@
       "categories": [
         "news"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "documentary",
@@ -101,7 +101,7 @@
       "categories": [
         "religious"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "cooking",
@@ -112,7 +112,7 @@
       "categories": [
         "cooking"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "sports_arab",
@@ -156,7 +156,7 @@
         "entertainment",
         "comedy"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "movies",
@@ -179,7 +179,7 @@
       "categories": [
         "series"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "music",
@@ -225,7 +225,7 @@
       "categories": [
         "business"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "weather",
@@ -235,7 +235,7 @@
       "categories": [
         "weather"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "shop",
@@ -245,7 +245,7 @@
       "categories": [
         "shop"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "culture",
@@ -256,7 +256,7 @@
       "categories": [
         "culture"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "family",
@@ -267,7 +267,7 @@
       "categories": [
         "family"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "public",
@@ -278,7 +278,7 @@
       "categories": [
         "public"
       ],
-      "scope": "all"
+      "scope": "arab"
     },
     {
       "key": "auto",
