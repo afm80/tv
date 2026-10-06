@@ -329,3 +329,30 @@ test('تقرير الفئة: يعدّ حسب الدولة ويحسب الروا�
   assert.deepEqual(r.byCountry.US, { total: 2, playable: 1 });
   assert.ok(!JSON.stringify(r).includes('.m3u8'));
 });
+
+// ───────── إعداد config.json الفعلي: الفئة تُجلب بكل قنواتها (عربية وغير عربية) إلى قسمها المقرر ─────────
+test('config.json الفعلي: كل قنوات الفئة المدموجة (عربية وأجنبية) تدخل قسمها الواحد', async () => {
+  const { readFileSync } = await import('node:fs');
+  const real = JSON.parse(readFileSync(new URL('./config.json', import.meta.url), 'utf8'));
+  dead = new Set(); const db = fresh();
+  const api = mkCatApi([
+    ['d1', 'D1', 'SA', ['education']], ['d2', 'D2', 'FR', ['culture']], ['d3', 'D3', 'JP', ['science']], ['d4', 'D4', 'US', ['documentary']],
+    ['n1', 'N1', 'EG', ['news']], ['n2', 'N2', 'DE', ['news']],
+    ['r1', 'R1', 'SA', ['religious']], ['r2', 'R2', 'IT', ['religious']],
+    ['c1', 'C1', 'BR', ['cooking']],
+    ['v1', 'V1', 'TR', ['lifestyle']], ['v2', 'V2', 'ES', ['travel']], ['v3', 'V3', 'IQ', ['general']], ['v4', 'V4', 'GB', ['weather']],
+    ['s1', 'S1', 'SA', ['sports']], ['s2', 'S2', 'FR', ['sports']]
+  ]);
+  const cfg = CFG(); cfg.maxChannelsPerCountry = 0; cfg.maxChannelsWorld = 0; cfg.categorySections = real.categorySections;
+  cfg.sections.arab.countries = real.sections.arab.countries;
+  await run(db, api, { cfg });
+  const sec = n => secByName(db, n).id, ids = id => idsOf(db.chans[keyOf(id)]);
+  for (const id of ['d1', 'd2', 'd3', 'd4']) assert.ok(ids(id).includes(sec('قنوات وثائقية')), `${id} → وثائقية`);
+  for (const id of ['n1', 'n2']) assert.ok(ids(id).includes(sec('قنوات أخبار')), `${id} → أخبار`);
+  for (const id of ['r1', 'r2']) assert.ok(ids(id).includes(sec('قنوات دينية')), `${id} → دينية`);
+  assert.ok(ids('c1').includes(sec('قنوات الطبخ')), 'c1 → طبخ');
+  for (const id of ['v1', 'v2', 'v3', 'v4']) assert.ok(ids(id).includes(sec('قنوات منوعة')), `${id} → منوعة`);
+  assert.ok(ids('s1').includes(sec('الرياضة العربية')) && !ids('s1').includes(sec('الرياضة العالمية')));
+  assert.ok(ids('s2').includes(sec('الرياضة العالمية')) && !ids('s2').includes(sec('الرياضة العربية')));
+  assert.equal(botKeys(db).length, 15);                                          // سجل واحد لكل قناة بلا تكرار
+});
