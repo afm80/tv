@@ -13,6 +13,9 @@ on:
         required: false
 permissions:
   contents: read
+concurrency:
+  group: sync-channels
+  cancel-in-progress: false
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -23,6 +26,8 @@ jobs:
         with:
           node-version: 20
       - run: npm install --prefix bot --no-audit --no-fund
+      - name: Self-test
+        run: npm test --prefix bot
       - name: Run sync
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
