@@ -974,6 +974,10 @@ body {
 </head>
 <body>
     <script>
+        // إزالة index.html من شريط العنوان (يبقى الرابط الأساسي من GitHub Pages فقط)
+        if (/\/index\.html$/i.test(window.location.pathname)) {
+            history.replaceState(history.state, '', window.location.pathname.replace(/index\.html$/i, '') + window.location.search + window.location.hash);
+        }
         if (window.location.hash && window.location.hash.includes('|')) {
             document.body.classList.add('player-open');
         }
@@ -2552,7 +2556,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=8', { updateViaCache: 'none' }).catch(err => console.warn('SW registration failed:', err));
+        navigator.serviceWorker.register('sw.js?v=9', { updateViaCache: 'none' }).catch(err => console.warn('SW registration failed:', err));
     }
 
     const homeNav = $('homeNav');
