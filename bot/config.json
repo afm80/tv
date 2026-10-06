@@ -1,6 +1,6 @@
 {
   "databaseURL": "https://alfaham-tv-1980-default-rtdb.firebaseio.com",
-  "siteOrigin": "",
+  "siteOrigin": "https://afm80.github.io",
   "sections": {
     "arab": {
       "id": "",
