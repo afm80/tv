@@ -505,35 +505,33 @@ body {
 #satPlayer .player-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-top:10px;}
 #satPlayer .player-controls select,#satPlayer .quality-button,#satPlayer .quality-toggle{border:1px solid rgba(255,255,255,.3);border-radius:8px;background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;font:inherit;cursor:pointer;}
 #satPlayer .player-switch{border:1px solid rgba(255,255,255,.3);border-radius:8px;background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;font:inherit;cursor:pointer;}
-#satPlayer .player-switch:hover,#satPlayer .player-switch.active{background:#fff;color:#000;}
+#satPlayer .player-switch:hover,#satPlayer .player-switch.active{background:#ffc107;color:#000;}
 #satPlayer .retry-switch{order:-1;border:1px solid rgba(255,255,255,.3);border-radius:50%;background:rgba(0,0,0,.75);color:#fff;width:34px;height:34px;padding:0;font:inherit;font-size:20px;font-weight:900;cursor:pointer;}
-#satPlayer .retry-switch:hover{background:#fff;color:#000;transform:rotate(90deg);}
+#satPlayer .retry-switch:hover{background:#ffc107;color:#000;transform:rotate(90deg);}
 #satPlayer .retry-switch[hidden]{display:none;}
-#satPlayer .quality-button.active,#satPlayer .quality-button:hover,#satPlayer .quality-toggle:hover{background:#fff;color:#000;}
+#satPlayer .quality-button.active,#satPlayer .quality-button:hover,#satPlayer .quality-toggle:hover{background:#ffc107;color:#000;}
 #satPlayer .quality-toggle{display:none;}
 #satPlayer .quality-menu{position:relative;display:inline-flex;}
 #satPlayer .quality-options{position:absolute;bottom:calc(100% + 6px);right:0;display:none;min-width:130px;padding:5px;border-radius:8px;background:rgba(0,0,0,.9);z-index:4;}
 #satPlayer .quality-options.open{display:grid;gap:4px;}
 #satPlayer .quality-options button{border:0;border-radius:5px;padding:7px 9px;background:transparent;color:#fff;cursor:pointer;text-align:right;}
-#satPlayer .quality-options button:hover{background:#fff;color:#000;}
+#satPlayer .quality-options button:hover{background:#ffc107;color:#000;}
 #satPlayer{padding:10px;margin:10px auto;}
 #satPlayer .video-wrap{border-radius:16px;}
 #satPlayer .player-controls select,#satPlayer .quality-button,#satPlayer .quality-toggle,#satPlayer .player-switch{min-height:42px;border-radius:12px;}
 #playerContainer #satPlayer{display:block;}
+#satPlayer .player-controls select,#satPlayer .player-switch,#satPlayer .quality-toggle,#satPlayer .quality-button,#satPlayer .quality-options button{font-weight:900;font-size:15px;letter-spacing:.2px;}
+
 /* شريط روابط القناة: أعلى يسار المشغل، يتمرر أفقياً ويختفي عند عدم التفاعل */
-#satPlayer .sat-link-buttons{position:absolute;top:10px;left:10px;max-width:calc(100% - 20px);z-index:6;display:flex;flex-wrap:nowrap;gap:6px;direction:ltr;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;padding:2px;border-radius:999px;opacity:1;transform:translateY(0);transition:opacity .3s ease,transform .3s ease;}
+#satPlayer .sat-link-buttons{position:absolute;top:6px;left:0;max-width:calc(100% - 10px);z-index:6;display:flex;flex-wrap:nowrap;gap:6px;direction:ltr;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scroll-snap-type:none;padding:4px 10px;border-radius:0;box-sizing:border-box;opacity:1;transform:translateY(0);transition:opacity .3s ease,transform .3s ease;}
 #satPlayer .sat-link-buttons::-webkit-scrollbar{display:none;}
 #satPlayer .sat-link-buttons:empty{display:none;}
 #satPlayer .sat-link-buttons.idle{opacity:0;transform:translateY(-8px);pointer-events:none;}
-#satPlayer .sat-link-buttons.fade-l{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 22px);mask-image:linear-gradient(to right,transparent 0,#000 22px);}
-#satPlayer .sat-link-buttons.fade-r{-webkit-mask-image:linear-gradient(to left,transparent 0,#000 22px);mask-image:linear-gradient(to left,transparent 0,#000 22px);}
-#satPlayer .sat-link-buttons.fade-l.fade-r{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%);}
-#satPlayer .link-chip{flex:0 0 auto;scroll-snap-align:start;direction:rtl;display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 14px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(15,15,20,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;font:inherit;font-size:13px;font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .2s,color .2s,border-color .2s,transform .15s;}
-#satPlayer .link-chip:hover{background:rgba(255,255,255,.22);}
+#satPlayer .link-chip{flex:0 0 auto;direction:rtl;display:inline-flex;align-items:center;min-height:32px;padding:0 14px;border:0;border-radius:999px;background:rgba(255,255,255,.22);color:#fff;font:inherit;font-size:13px;font-weight:700;line-height:1;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.6);cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent;transition:background .2s,color .2s,transform .15s;}
+#satPlayer .link-chip:hover{background:rgba(255,255,255,.34);}
 #satPlayer .link-chip:active{transform:scale(.95);}
-#satPlayer .link-chip.active{background:#fff;color:#000;border-color:#fff;}
-#satPlayer .link-chip.active::before{content:'';width:6px;height:6px;border-radius:50%;background:#e50914;box-shadow:0 0 0 2px rgba(229,9,20,.25);}
-@media (max-width:600px){#satPlayer .sat-link-buttons{top:8px;left:8px;max-width:calc(100% - 16px);}#satPlayer .link-chip{min-height:30px;padding:0 12px;font-size:12px;}}
+#satPlayer .link-chip.active{background:#ffc107;color:#000;text-shadow:none;}
+@media (max-width:600px){#satPlayer .sat-link-buttons{top:4px;left:0;max-width:100%;}#satPlayer .link-chip{min-height:30px;padding:0 12px;font-size:12px;}}
 
 .matches-table-container,
 .external-link-container {
@@ -887,6 +885,7 @@ function setupLinkButtons(links) {
             const engineSelect = $('satEngineSelect');
             if (engineSelect) engineSelect.value = 'auto';
             satPlayVideo(link.url, currentChannelName, currentChannelImg);
+            button.blur();
             satLinkBar.wake();
         };
         box.appendChild(button);
@@ -901,13 +900,6 @@ const satLinkBar = (() => {
     let timer = null;
     const box = () => $('satLinkButtons');
     const wrap = () => $('satVideoWrap');
-    const busy = () => {
-        const b = box(), v = $('satVideoEl');
-        if (!b) return true;
-        if (b.matches(':hover') || b.contains(document.activeElement)) return true;
-        if ($('satPlayerLoader')?.classList.contains('show') || $('satPlayerFailure')?.classList.contains('show')) return true;
-        return !!(v && v.paused && !v.ended && v.readyState > 0);
-    };
     const update = () => {
         const b = box(); if (!b) return;
         const max = b.scrollWidth - b.clientWidth;
@@ -917,7 +909,7 @@ const satLinkBar = (() => {
     };
     const schedule = () => {
         clearTimeout(timer);
-        timer = setTimeout(() => { if (busy()) return schedule(); box()?.classList.add('idle'); }, IDLE_MS);
+        timer = setTimeout(() => { box()?.classList.add('idle'); }, IDLE_MS);
     };
     const wake = () => {
         const b = box(); if (!b || !b.children.length) return;
