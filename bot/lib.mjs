@@ -14,7 +14,9 @@ const ALIASES = {
 
 let dn = null;
 try { dn = new Intl.DisplayNames(['ar'], { type: 'region' }); } catch {}
-const NAME_OVERRIDE = { UK: 'المملكة المتحدة' }; // iptv-org يستخدم UK بدل GB
+const NAME_OVERRIDE = { UK: 'المملكة المتحدة', INT: 'قنوات دولية' }; // iptv-org يستخدم UK بدل GB
+// صورة علم الدولة (فارغة إن لم يكن الرمز دولة حقيقية مثل INT)
+export const flagUrl = code => { const c = code === 'UK' ? 'GB' : String(code || '').toUpperCase(); return /^[A-Z]{2}$/.test(c) ? `https://flagcdn.com/w320/${c.toLowerCase()}.png` : ''; };
 export const arName = code => NAME_OVERRIDE[code] || (() => { try { return dn && dn.of(code); } catch { return null; } })() || code;
 
 // توحيد النص العربي للمقارنة (يتجاهل التشكيل والهمزات والـ "ال" والرموز/الإيموجي)
@@ -102,7 +104,7 @@ export async function checkStream(url, { timeoutMs = 8000, origin = '', requireC
   } catch { return false; } finally { clearTimeout(t); }
 }
 
-export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignore = new Set(), now = Date.now() }) {
+export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignore = new Set(), countryNames = {}, now = Date.now() }) {
   const log = [], summary = {};
   const catList = Object.entries(cats || {}).map(([k, v]) => ({ id: v.id || k, name: v.name || '', parentId: String(v.parentId || v.parent || '') }));
   const top = catList.filter(c => !c.parentId);
@@ -113,6 +115,7 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignor
     return top.find(c => names.includes(norm(c.name)))?.id || null;
   };
   const catCreates = {}, jobs = [];
+  const nm = code => { const a = arName(code); return a && a !== code ? a : (countryNames[code] || code); };
   const aliases = cfg.countryAliases || {};
 
   // القسم العربي: الأقسام الفرعية جاهزة عندك، نطابقها فقط ولا ننشئ شيئاً
@@ -122,11 +125,24 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignor
   else {
     const kids = catList.filter(c => c.parentId === arabSec);
     const m = matchAll(arabCodes, kids, aliases);
-    for (const code of arabCodes) m[code] ? jobs.push({ code, catId: m[code], arabic: true }) : log.push(`⚠ لا يوجد قسم فرعي لـ ${arName(code)} (${code}) داخل القسم العربي`);
+    arabCodes.forEach((code, i) => {
+      if (m[code]) return jobs.push({ code, catId: m[code], arabic: true });
+      const id = `bot_cat_${code}`;
+      if (catList.some(c => c.id === id)) return jobs.push({ code, catId: id, arabic: true });
+      if (cfg.sections.arab.autoCreateCountries === false) return log.push(`⚠ لا يوجد قسم فرعي لـ ${nm(code)} (${code}) داخل القسم العربي`);
+      catCreates[id] = { id, name: nm(code), img: flagUrl(code), parentId: arabSec, link: '', order: now + i, source: 'bot' };
+      jobs.push({ code, catId: id, arabic: true });
+    });
   }
 
   // القسم العالمي: ننشئه وأقسام دوله تلقائياً إذا لم تكن موجودة
-  const worldCodes = pick(cfg.sections.world.countries || []);
+  let worldList = cfg.sections.world.countries || [];
+  if (worldList.includes('*')) {
+    const arabSet = new Set(cfg.sections.arab.countries || ARAB);
+    const fromSource = [...new Set(api.channels.map(c => c.country).filter(Boolean))].filter(c => !arabSet.has(c));
+    worldList = [...new Set([...worldList.filter(c => c !== '*'), ...fromSource])].sort((a, b) => nm(a).localeCompare(nm(b), 'ar'));
+  }
+  const worldCodes = pick(worldList);
   let worldSec = findSection(cfg.sections.world);
   if (!worldSec && worldCodes.length) {
     worldSec = 'bot_sec_world';
@@ -138,11 +154,18 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignor
     const m = matchAll(worldCodes, kids, aliases);
     worldCodes.forEach((code, i) => {
       if (m[code]) return jobs.push({ code, catId: m[code], arabic: false });
-      if (cfg.sections.world.autoCreateCountries === false) return log.push(`⚠ لا يوجد قسم فرعي لـ ${arName(code)} (${code}) في القسم العالمي`);
       const id = `bot_cat_${code}`;
-      catCreates[id] = { id, name: arName(code), img: '', parentId: worldSec, link: '', order: now + i, source: 'bot' };
+      if (catList.some(c => c.id === id)) return jobs.push({ code, catId: id, arabic: false }); // موجود: لا نعيد كتابته
+      if (cfg.sections.world.autoCreateCountries === false) return log.push(`⚠ لا يوجد قسم فرعي لـ ${nm(code)} (${code}) في القسم العالمي`);
+      catCreates[id] = { id, name: nm(code), img: flagUrl(code), parentId: worldSec, link: '', order: now + i, source: 'bot' };
       jobs.push({ code, catId: id, arabic: false });
     });
+  }
+
+  // أقسام أنشأها البوت سابقاً بلا صورة: نضع لها العلم (ولا نلمس أي صورة وضعتها أنت)
+  for (const j of jobs) {
+    const old = cats?.[j.catId] || Object.values(cats || {}).find(v => v && v.id === j.catId);
+    if (old && old.source === 'bot' && !old.img && flagUrl(j.code)) catCreates[j.catId] = { ...old, id: j.catId, img: flagUrl(j.code) };
   }
 
   const elig = groupEligible({ ...cfg, channels: api.channels, blocklist: api.blocklist, countries: jobs.map(j => j.code) });
@@ -176,8 +199,9 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignor
     }
     list.sort((a, b) => a.c.name.localeCompare(b.c.name));
     const kept = [];
-    for (let i = 0; i < list.length && kept.length < max; i += 20) {
-      const res = await Promise.all(list.slice(i, i + 20).map(async x => {
+    const cap = job.arabic ? max : (cfg.maxChannelsWorld ?? max), conc = cfg.checkConcurrency || 20;
+    for (let i = 0; i < list.length && kept.length < cap; i += conc) {
+      const res = await Promise.all(list.slice(i, i + conc).map(async x => {
         const ok = [];
         for (const s of x.cands) {
           if (ok.length >= maxLinks) break;
@@ -185,7 +209,7 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignor
         }
         return ok.length ? { ...x, ok } : null;
       }));
-      for (const r of res) if (r && kept.length < max) kept.push(r);
+      for (const r of res) if (r && kept.length < cap) kept.push(r);
     }
     for (const { c, ok } of kept) {
       const k = keyOf(c.id), old = chans?.[k];
@@ -200,7 +224,14 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignor
         order: old?.order ?? now + (seq++), source: 'bot', sourceId: c.id, country: job.code, updatedAt: now
       };
     }
-    summary[job.code] = { name: arName(job.code), candidates: list.length, added: kept.length, ...stats };
+    summary[job.code] = { name: nm(job.code), candidates: list.length, added: kept.length, ...stats };
+  }
+
+  // لا ننشئ قسماً جديداً لدولة لم نجد لها أي قناة شغالة
+  for (const j of jobs) {
+    if (!catCreates[j.catId] || catList.some(c => c.id === j.catId)) continue;
+    if (summary[j.code]?.added > 0) log.push(`＋ سيُنشأ قسم: ${nm(j.code)}`);
+    else delete catCreates[j.catId];
   }
 
   // حذف قنوات البوت التي لم تعد صالحة (فقط للدول التي عالجناها)
