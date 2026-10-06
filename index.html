@@ -478,16 +478,49 @@ body {
     width: 100%;
     height: 100%;
     background: #000;
+    color: #fff;
     z-index: 99999;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding-bottom: 72px;
+    display: block;
+    overflow-y: auto;
 }
 
 .player-container.hidden {
     display: none !important;
 }
+
+/* ===== المشغل الجديد (منقول حرفياً) ===== */
+.splash-spinner{width:48px;height:48px;border-radius:50%;border:4px solid rgba(255,255,255,.15);border-top-color:#ff6600;border-right-color:#ff6600;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.player-loader{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(0,0,0,.55);z-index:4;color:#fff;font-size:13px;font-weight:700;}
+.player-loader.show{display:flex;}
+.player-loader .splash-spinner{width:40px;height:40px;}
+.player-failure{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(0,0,0,.85);z-index:5;color:#fff;padding:16px;text-align:center;}
+.player-failure.show{display:flex;}
+.player-failure p{margin:0;font-size:13px;}
+.player-failure button{background:#fff;border:none;color:#000;padding:8px 16px;border-radius:8px;cursor:pointer;font:inherit;font-weight:700;}
+#satPlayer{display:block;max-width:900px;margin:20px auto;padding:16px;}
+#satPlayer .video-wrap{position:relative;width:100%;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.3);background:#000;aspect-ratio:16/9;}
+#satPlayer video,#satPlayer iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;background:#000;}
+#satMsg{color:#fff;background:rgba(0,0,0,.7);padding:10px;border-radius:8px;font-size:13px;margin-top:10px;display:none;}
+#satPlayer .player-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-top:10px;}
+#satPlayer .player-controls select,#satPlayer .quality-button,#satPlayer .quality-toggle{border:1px solid rgba(255,255,255,.3);border-radius:8px;background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;font:inherit;cursor:pointer;}
+#satPlayer .player-switch{border:1px solid rgba(255,255,255,.3);border-radius:8px;background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;font:inherit;cursor:pointer;}
+#satPlayer .player-switch:hover,#satPlayer .player-switch.active{background:#fff;color:#000;}
+#satPlayer .retry-switch{order:-1;border:1px solid rgba(255,255,255,.3);border-radius:50%;background:rgba(0,0,0,.75);color:#fff;width:34px;height:34px;padding:0;font:inherit;font-size:20px;font-weight:900;cursor:pointer;}
+#satPlayer .retry-switch:hover{background:#fff;color:#000;transform:rotate(90deg);}
+#satPlayer .retry-switch[hidden]{display:none;}
+#satPlayer .quality-button.active,#satPlayer .quality-button:hover,#satPlayer .quality-toggle:hover{background:#fff;color:#000;}
+#satPlayer .quality-toggle{display:none;}
+#satPlayer .quality-menu{position:relative;display:inline-flex;}
+#satPlayer .quality-options{position:absolute;bottom:calc(100% + 6px);right:0;display:none;min-width:130px;padding:5px;border-radius:8px;background:rgba(0,0,0,.9);z-index:4;}
+#satPlayer .quality-options.open{display:grid;gap:4px;}
+#satPlayer .quality-options button{border:0;border-radius:5px;padding:7px 9px;background:transparent;color:#fff;cursor:pointer;text-align:right;}
+#satPlayer .quality-options button:hover{background:#fff;color:#000;}
+#satPlayer{padding:10px;margin:10px auto;}
+#satPlayer .video-wrap{border-radius:16px;}
+#satPlayer .player-controls select,#satPlayer .quality-button,#satPlayer .quality-toggle,#satPlayer .player-switch{min-height:42px;border-radius:12px;}
+#playerContainer #satPlayer{display:block;}
+.sat-link-buttons{display:contents;}
 
 .matches-table-container,
 .external-link-container {
@@ -547,85 +580,6 @@ body {
     background: rgba(255,255,255,0.15);
 }
 
-#player-wrapper {
-    flex: 1;
-    width: 100%;
-    min-height: 0;
-    background: #000;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.player-engine-control {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 12px 16px;
-    background: rgba(17, 17, 17, 0.95);
-    border-top: 1px solid rgba(255,255,255,0.1);
-    width: 100%;
-    flex-shrink: 0;
-    min-height: 50px;
-    z-index: 1000002;
-}
-
-.player-engine-control label {
-    color: #fff;
-    font-weight: 700;
-    font-size: 13px;
-}
-
-.player-engine-control select {
-    padding: 8px 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: #000;
-    color: #fff;
-    font-size: 13px;
-    min-width: 150px;
-}
-
-.video-js,
-.native-video,
-.playerjs-container,
-#clappr-container,
-#dplayer-container,
-#openplayer-container,
-#mediachrome-container,
-#shaka-video,
-#dashjs-video,
-#plyr-video,
-#mediaelement-video,
-#jwplayer-container,
-#flowplayer-container {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    object-fit: contain !important;
-    margin: auto !important;
-}
-
-.playerjs-container iframe,
-#clappr-container .clappr-player,
-#dplayer-container .dplayer-video-wrap,
-#jwplayer-container .jwplayer,
-#flowplayer-container .fp-player {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-.video-js video {
-    object-fit: contain !important;
-}
-
 .message-card {
     background: rgba(0, 0, 0, 0.4) !important;
     color: #fff !important;
@@ -636,22 +590,6 @@ body {
     width: auto !important;
     min-height: auto !important;
     box-shadow: none !important;
-}
-
-.native-video.hidden,
-.playerjs-container.hidden,
-.video-js.hidden,
-#clappr-container.hidden,
-#dplayer-container.hidden,
-#openplayer-container.hidden,
-#mediachrome-container.hidden,
-#shaka-video.hidden,
-#dashjs-video.hidden,
-#plyr-video.hidden,
-#mediaelement-video.hidden,
-#jwplayer-container.hidden,
-#flowplayer-container.hidden {
-    display: none !important;
 }
 
 .matches-grid {
@@ -730,34 +668,6 @@ body {
     font-weight: 700;
 }
 
-.player-error-msg {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 700;
-    z-index: 100002;
-    pointer-events: none;
-    text-align: center;
-    white-space: nowrap;
-}
-
-.vjs-big-play-centered .vjs-big-play-button {
-    background-color: rgba(56, 189, 248, 0.7);
-    border-radius: 50%;
-    width: 2em;
-    height: 2em;
-    line-height: 2em;
-    margin-top: -1em;
-    margin-left: -1em;
-    border: none;
-}
-
 .lightbox { display: flex; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 999999; }
 .lightbox-content { background: #fff; padding: 20px; border-radius: 10px; text-align: center; max-width: 400px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); direction: rtl; margin: 10px; }
 .icon-alert { color: #ff5722; margin-bottom: 10px; }
@@ -774,192 +684,9 @@ body {
 #match_today h2 { background: #FF6600; color: #fff; text-align: center; padding: 10px; }
 #clock { font-size: 0.6em; margin-top: 1px; }
 
-.vjs-control-bar {
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent) !important;
-    height: 4em !important;
-}
-
-.vjs-button > .vjs-icon-placeholder:before {
-    line-height: 2.5 !important;
-}
-
-.player-header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10001;
-    display: none;
-}
-
-.quality-buttons {
-    position: absolute;
-    top: 18px;
-    left: 18px;
-    z-index: 999999;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 8px;
-    background: transparent;
-    border-radius: 14px;
-    backdrop-filter: none;
-    direction: ltr;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-.quality-buttons.show {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.quality-menu {
-    position: absolute;
-    right: 18px;
-    top: 18px;
-    z-index: 999999;
-    width: auto;
-    height: auto;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-.quality-menu.show {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.quality-option-list {
-    position: absolute;
-    right: 0;
-    top: 56px;
-    min-width: 130px;
-    max-width: 240px;
-    background: rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(16px);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-}
-
-.vjs-quality-toggle-button {
-    width: 38px;
-    height: 38px;
-    line-height: 38px;
-    font-size: 18px;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    border-radius: 50%;
-    color: #ffffff;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.vjs-quality-toggle-button:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.vjs-quality-toggle-button .vjs-icon-placeholder {
-    font-size: 18px;
-    line-height: 1;
-}
-
-.quality-toggle {
-    width: auto;
-    height: auto;
-    border-radius: 0;
-    border: none;
-    background: transparent;
-    color: #ffffff;
-    font-size: 22px;
-    padding: 0;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s ease;
-}
-
-.quality-toggle:hover {
-    transform: scale(1.1);
-    background: transparent;
-}
-
-.quality-option-item {
-    width: 100%;
-    padding: 10px 12px;
-    border: none;
-    background: transparent;
-    color: #f8fafc;
-    text-align: right;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.quality-option-item:hover,
-.quality-option-item.active {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.quality-option-list.hidden {
-    display: none;
-}
-
-.quality-menu.hidden {
-    display: none;
-}
-
-.quality-button {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: transparent;
-    border: 2px solid #ffffff;
-    color: #ffffff;
-    font-family: 'Cairo', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    line-height: 1;
-    padding: 0;
-    margin: 0;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    overflow: hidden;
-    word-break: break-all;
-}
-
-.quality-button.active {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: #ffffff;
-    border-width: 3px;
-}
-
-.quality-button:hover {
-    transform: scale(1.1);
-    background: rgba(255, 255, 255, 0.1);
-    border-color: #ffffff;
-}
-
-#player {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-}
-
     </style>
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dplayer@1/dist/DPlayer.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" sizes="180x180" href="icon-1024.png" />
@@ -1030,152 +757,37 @@ body {
     </footer>
 
     <div class="player-container hidden" id="playerContainer">
-        <div id="player-wrapper">
-            <div id="player-error-msg" class="player-error-msg hidden"></div>
-            <video id="video-player" class="video-js vjs-default-skin vjs-big-play-centered" playsinline crossorigin="anonymous"></video>
-            <video id="native-video" class="native-video hidden" playsinline controls crossorigin="anonymous"></video>
-            <div id="playerjs-container" class="playerjs-container hidden"></div>
-            <div id="clappr-container" class="hidden"></div>
-            <div id="dplayer-container" class="hidden"></div>
-            <div id="openplayer-container" class="hidden"></div>
-            <div id="mediachrome-container" class="hidden">
-                <media-controller>
-                    <video slot="media" id="mediachrome-video" crossorigin="anonymous"></video>
-                    <media-control-bar>
-                        <media-play-button></media-play-button>
-                        <media-seek-backward-button></media-seek-backward-button>
-                        <media-seek-forward-button></media-seek-forward-button>
-                        <media-mute-button></media-mute-button>
-                        <media-volume-range></media-volume-range>
-                        <media-time-range></media-time-range>
-                        <media-fullscreen-button></media-fullscreen-button>
-                    </media-control-bar>
-                </media-controller>
-            </div>
-            <video id="shaka-video" class="hidden" playsinline controls crossorigin="anonymous"></video>
-            <video id="dashjs-video" class="hidden" playsinline controls crossorigin="anonymous"></video>
-            <video id="plyr-video" class="hidden" playsinline controls crossorigin="anonymous"></video>
-            <video id="mediaelement-video" class="hidden" playsinline controls crossorigin="anonymous"></video>
-            <div id="jwplayer-container" class="hidden"></div>
-            <div id="flowplayer-container" class="hidden"></div>
-            <div class="quality-buttons" id="qualityButtons"></div>
-            <div class="quality-menu" id="qualityMenu">
-                <button id="qualityToggle" class="quality-toggle" title="جودة الفيديو">⚙</button>
-                <div id="qualityOptionList" class="quality-option-list hidden"></div>
-            </div>
+    <div id="satPlayer">
+      <div class="video-wrap" id="satVideoWrap">
+        <video id="satVideoEl" controls autoplay playsinline></video>
+        <div class="player-loader" id="satPlayerLoader"><div class="splash-spinner"></div><div>جاري تشغيل القناة...</div></div>
+        <div class="player-failure" id="satPlayerFailure"><p>⚠ تعذر تشغيل القناة حالياً.</p><button type="button" id="satRetryLoaderBtn">إعادة المحاولة</button></div>
+      </div>
+      <div class="player-controls">
+        <div class="sat-link-buttons" id="satLinkButtons"></div>
+        <button id="satPrimaryPlayerBtn" class="player-switch active" type="button">المشغل الرئيسي</button>
+        <button id="satBackupPlayerBtn" class="player-switch" type="button">المشغل الاحتياطي</button>
+        <button id="satRetryKidsBtn" class="retry-switch" type="button" hidden>↻</button>
+        <select id="satEngineSelect">
+          <option value="auto">تلقائي</option>
+          <option value="videojs">Video.js</option>
+          <option value="hlsjs">HLS.js</option>
+          <option value="dplayer">DPlayer</option>
+          <option value="clappr">Clappr</option>
+          <option value="native">المشغل الأصلي</option>
+        </select>
+        <div class="quality-menu">
+          <button id="satQualityToggle" class="quality-toggle" type="button">⚙ الجودة</button>
+          <div id="satQualityOptions" class="quality-options"></div>
         </div>
-        <div class="player-engine-control">
-            <label for="playerEngineSelect">المشغل:</label>
-            <select id="playerEngineSelect">
-                <option value="auto">تلقائي</option>
-                <option value="videojs">Video.js</option>
-                <option value="hlsjs">HLS.js</option>
-                <option value="dplayer">DPlayer</option>
-                <option value="shaka">Shaka Player</option>
-                <option value="dashjs">DASH.js</option>
-                <option value="clappr">Clappr</option>
-                <option value="native">المشغل الأصلي</option>
-            </select>
-        </div>
+      </div>
+      <div id="satMsg"></div>
+    </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.compiled.debug.js"></script>
-    <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dplayer@latest/dist/DPlayer.min.js"></script>
     <script>
-(function(window) {
-    class Playerjs {
-        constructor(config) {
-            if (!config || !config.id || !config.file) return;
-            this.container = document.getElementById(config.id);
-            this.events = {};
-            this.hls = null;
-            this.video = document.createElement('video');
-            this.video.controls = true;
-            this.video.playsInline = true;
-            this.video.autoplay = !!config.autoplay;
-            this.video.crossOrigin = 'anonymous';
-            this.video.style.width = '100%';
-            this.video.style.height = '100%';
-            this.video.style.borderRadius = '12px';
-            this.video.style.backgroundColor = '#000';
-            if (this.container) {
-                this.container.innerHTML = '';
-                this.container.appendChild(this.video);
-            }
-            this.url = config.file;
-            if (this.url && this.url.includes('.m3u8') && window.Hls && Hls.isSupported()) {
-                this.hls = new Hls();
-                this.hls.loadSource(this.url);
-                this.hls.attachMedia(this.video);
-                this.hls.on(Hls.Events.ERROR, (event, data) => {
-                    if (data.fatal) {
-                        this.emit('error', data);
-                    }
-                });
-            } else if (this.url) {
-                this.video.src = this.url;
-            }
-            this.video.addEventListener('error', () => {
-                this.emit('error', { message: 'Video element error', code: this.video.error ? this.video.error.code : null });
-            });
-            if (this.video.autoplay) {
-                this.video.play().catch(() => {});
-            }
-        }
-
-        on(event, callback) {
-            if (!this.events[event]) this.events[event] = [];
-            this.events[event].push(callback);
-        }
-
-        emit(event, data) {
-            if (!this.events[event]) return;
-            this.events[event].forEach((callback) => {
-                try {
-                    callback(data);
-                } catch (err) {
-                    console.error('Playerjs event callback error:', err);
-                }
-            });
-        }
-
-        pause() {
-            if (this.video && typeof this.video.pause === 'function') {
-                this.video.pause();
-            }
-        }
-
-        destroy() {
-            if (this.hls && typeof this.hls.destroy === 'function') {
-                this.hls.destroy();
-                this.hls = null;
-            }
-            if (this.video) {
-                try {
-                    this.video.pause();
-                } catch (err) {}
-                if (this.video.parentNode) {
-                    this.video.parentNode.removeChild(this.video);
-                }
-                this.video = null;
-            }
-            if (this.container) {
-                this.container.innerHTML = '';
-                this.container = null;
-            }
-            this.events = {};
-        }
-    }
-
-    window.Playerjs = Playerjs;
-})(window);
-
 const firebaseConfig = {
     apiKey: "AIzaSyDULmgQtz0iIz7KD2UCSfPomr7iOtIHSaU",
     authDomain: "alfaham-tv-1980.firebaseapp.com",
@@ -1199,43 +811,13 @@ let sidebarLinksCache = [];
 let currentStack = [];
 let currentChannelId = null;
 let currentLinkIndex = 0;
-let videojsInstance = null;
-let playerjsEngineInstance = null;
 let currentChannelLinks = [];
+let currentChannelName = '';
+let currentChannelImg = '';
 let deferredInstallPrompt = null;
-let currentQualitySources = [];
-let currentQualityMode = 'links';
-let currentQualityIndex = 0;
-let qualityMenuAvailable = false;
-let currentPlayerEngine = 'videojs';
-let attemptedFallbacks = { videojs: false, playerjs: false, native: false, hlsjs: false, shaka: false, dashjs: false, clappr: false, plyr: false, dplayer: false, mediaelement: false, openplayer: false, mediachrome: false, flvjs: false, jwplayer: false, flowplayer: false };
-let nativePlayerInstance = null;
-let hlsjsInstance = null;
-let shakaPlayerInstance = null;
-let dashjsInstance = null;
-let clapprInstance = null;
-let plyrInstance = null;
-let dplayerInstance = null;
-let mediaelementInstance = null;
-let openplayerInstance = null;
-let flvjsInstance = null;
-let jwplayerInstance = null;
-let flowplayerInstance = null;
-let qualityTimeout = null;
 let appInitialized = false;
-let parallelEngineAttempts = 0;
-let parallelEngineSuccessful = false;
-let playerSourceToken = 0;
 let appSettings = { matchesLink: DEFAULT_MATCHES_LINK, matchesTitle: 'مباريات اليوم' };
 
-const FALLBACK_ORDER = ['videojs', 'hlsjs', 'dplayer', 'clappr', 'shaka', 'dashjs', 'native'];
-
-function getFallbackOrder(url) {
-    const mediaType = getMediaType(url);
-    if (mediaType === 'application/dash+xml') return ['shaka', 'dashjs', 'native'];
-    if (mediaType === 'application/x-mpegURL') return ['videojs', 'hlsjs', 'dplayer', 'clappr', 'native'];
-    return ['videojs', 'dplayer', 'clappr', 'native'];
-}
 
 function stopAllMedia() {
     document.querySelectorAll('audio, video').forEach(media => {
@@ -1254,117 +836,284 @@ function stopAllMedia() {
     });
 }
 
+
+/* ===== ربط المشغل الجديد بالموقع ===== */
 function cleanupAllPlayers() {
-    if (engineTimeoutHandle) {
-        clearTimeout(engineTimeoutHandle);
-        engineTimeoutHandle = null;
-    }
-    if (videojsInstance) { try { videojsInstance.dispose(); } catch(e){} videojsInstance = null; }
-    if (hlsjsInstance) { try { hlsjsInstance.destroy(); } catch(e){} hlsjsInstance = null; }
-    if (shakaPlayerInstance) { try { shakaPlayerInstance.destroy(); } catch(e){} shakaPlayerInstance = null; }
-    if (dashjsInstance) { try { dashjsInstance.reset(); } catch(e){} dashjsInstance = null; }
-    if (clapprInstance) { try { clapprInstance.destroy(); } catch(e){} clapprInstance = null; }
-    if (plyrInstance) { try { plyrInstance.destroy(); } catch(e){} plyrInstance = null; }
-    if (dplayerInstance) { try { dplayerInstance.destroy(); } catch(e){} dplayerInstance = null; }
-    if (mediaelementInstance) { try { mediaelementInstance.remove(); } catch(e){} mediaelementInstance = null; }
-    if (openplayerInstance) { try { openplayerInstance.destroy(); } catch(e){} openplayerInstance = null; }
-    if (flvjsInstance) { try { flvjsInstance.destroy(); } catch(e){} flvjsInstance = null; }
-    if (jwplayerInstance) { try { jwplayerInstance.remove(); } catch(e){} jwplayerInstance = null; }
-    if (flowplayerInstance) { try { flowplayerInstance.shutdown(); } catch(e){} flowplayerInstance = null; }
-    
-    cleanupPlayerJS();
-    cleanupNativePlayer();
-    
-    ['video-player', 'native-video', 'playerjs-container', 'clappr-container', 'dplayer-container', 'openplayer-container', 'mediachrome-container', 'shaka-video', 'dashjs-video', 'plyr-video', 'mediaelement-video', 'jwplayer-container', 'flowplayer-container'].forEach(id => {
-        const el = $(id);
-        if (el) el.classList.add('hidden');
+    try { satResetPlayers(); } catch (e) {}
+    satActiveUrl = '';
+}
+
+function showPlayer(pushHistory = true) {
+    $('playerContainer').classList.remove('hidden');
+    document.body.classList.add('player-open');
+    document.body.style.overflow = 'hidden';
+    if (pushHistory) pushState();
+}
+
+function setupLinkButtons(links) {
+    const box = $('satLinkButtons');
+    if (!box) return;
+    box.innerHTML = '';
+    if (!links || links.length < 2) return;
+    links.forEach((link, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'player-switch' + (index === currentLinkIndex ? ' active' : '');
+        button.textContent = link.label || `رابط ${index + 1}`;
+        button.title = link.label || `رابط ${index + 1}`;
+        button.onclick = event => {
+            event.stopPropagation();
+            currentLinkIndex = index;
+            box.querySelectorAll('button').forEach((item, i) => item.classList.toggle('active', i === index));
+            const engineSelect = $('satEngineSelect');
+            if (engineSelect) engineSelect.value = 'auto';
+            satPlayVideo(link.url, currentChannelName, currentChannelImg);
+        };
+        box.appendChild(button);
     });
 }
 
-function fallbackToNextEngine(url, sourceToken = playerSourceToken) {
-    if (sourceToken !== playerSourceToken) return false;
-    if (parallelEngineSuccessful) return;
-    
-    for (let engine of getFallbackOrder(url)) {
-        if (!attemptedFallbacks[engine]) {
-            setPlayerSource(url, engine, false);
-            const sourceToken = playerSourceToken;
-            engineTimeoutHandle = setTimeout(() => {
-                if (sourceToken === playerSourceToken && !parallelEngineSuccessful) {
-                    fallbackToNextEngine(url, sourceToken);
-                }
-            }, 5000);
-            return true;
-        }
+async function selectChannel(channel, pushHistory = true) {
+    const links = parseChannelLinks(channel);
+    if (!links.length) {
+        if ($('grid')) $('grid').innerHTML = '<div class="card message-card">لا يوجد رابط بث صالح لهذه القناة</div>';
+        return;
     }
-    
-    const engineSelect = $('playerEngineSelect');
+    currentChannelId = channel.id;
+    currentChannelLinks = links;
+    currentChannelName = channel.name || '';
+    currentChannelImg = channel.img || '';
+    currentLinkIndex = 0;
+    const engineSelect = $('satEngineSelect');
     if (engineSelect) engineSelect.value = 'auto';
-    return fallbackToNextLink();
+    setupLinkButtons(links);
+    showPlayer(pushHistory);
+    await loadSatLibraries();
+    if (currentChannelId !== channel.id) return;
+    satPlayVideo(links[0].url, currentChannelName, currentChannelImg);
 }
 
-function fallbackToNextLink() {
-    if (!currentChannelLinks || currentChannelLinks.length <= 1) return false;
-    const nextIndex = currentLinkIndex + 1;
-    if (nextIndex >= currentChannelLinks.length) {
-        showPlayerError('عذراً، جميع الروابط غير مدعومة');
-        return false;
-    }
-    
-    currentLinkIndex = nextIndex;
-    currentQualityIndex = nextIndex;
-    currentQualityMode = 'links';
-    
-    Object.keys(attemptedFallbacks).forEach(k => attemptedFallbacks[k] = false);
-    parallelEngineSuccessful = false;
-    
-    setupQualityButtons(currentChannelLinks, 'links');
-    document.querySelectorAll('.quality-button').forEach((btn, i) => {
-        btn.classList.toggle('active', i === nextIndex);
+function initVideoPlayer() {
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && $('playerContainer') && !$('playerContainer').classList.contains('hidden')) window.history.back();
     });
-    
-    toast(`جاري الانتقال للرابط التالي...`);
-    
-    setTimeout(() => {
-        tryEnginesInParallel(currentChannelLinks[nextIndex].url, 5);
-    }, 300);
-    
-    return true;
 }
 
-let engineTimeoutHandle = null;
-function markPlayerReady(sourceToken) {
-    if (sourceToken !== playerSourceToken) return;
-    parallelEngineSuccessful = true;
-    if (engineTimeoutHandle) {
-        clearTimeout(engineTimeoutHandle);
-        engineTimeoutHandle = null;
+/* ===== المشغل الجديد (منقول حرفياً) ===== */
+var satVideoEl=document.getElementById('satVideoEl'),satWrapEl=document.getElementById('satVideoWrap'),satMsgEl=document.getElementById('satMsg'),satRetryKidsBtn=document.getElementById('satRetryKidsBtn');
+var satPlayerLoader=document.getElementById('satPlayerLoader'),satPlayerFailure=document.getElementById('satPlayerFailure');
+function showPlayerLoader(kind){
+  var l=satPlayerLoader;
+  var f=satPlayerFailure;
+  if(l)l.classList.add('show');
+  if(f)f.classList.remove('show');
+}
+function hidePlayerLoader(kind){
+  var l=satPlayerLoader;
+  if(l)l.classList.remove('show');
+}
+function showPlayerFailure(kind,msg,retryCb){
+  var l=satPlayerLoader;
+  var f=satPlayerFailure;
+  if(l)l.classList.remove('show');
+  if(f){
+    if(msg){var p=f.querySelector('p');if(p)p.textContent=msg;}
+    var btn=f.querySelector('button');
+    if(btn){
+      btn.onclick=function(){
+        f.classList.remove('show');
+        if(typeof retryCb==='function')try{retryCb();}catch(e){}
+      };
     }
+    f.classList.add('show');
+  }
 }
 
-function tryEnginesInParallel(url, numEngines = 5) {
-    if (!url) return;
+function satShowMsg(text){satMsgEl.textContent=text;satMsgEl.style.display='block';satRetryKidsBtn.hidden=!/^⚠/.test(text);}
+function satHideMsg(){satMsgEl.style.display='none';satMsgEl.textContent='';satRetryKidsBtn.hidden=true;}
+satRetryKidsBtn.addEventListener('click',function(){satFallbackCycle=0;if(!satActiveUrl)return;if(satKidsPlayerMode==='backup'){satPlayBackupVideo(satActiveUrl,satActiveName,satActiveImage);}else{satPlayVideo(satActiveUrl,satActiveName,satActiveImage);}});
 
-    currentQualityMode = 'links';
-    currentQualitySources = [];
-    qualityMenuAvailable = false;
-    updateQualityMenuVisibility();
-    updateQualityMenu();
-    
-    if (engineTimeoutHandle) clearTimeout(engineTimeoutHandle);
-    parallelEngineAttempts = 0;
-    parallelEngineSuccessful = false;
-    Object.keys(attemptedFallbacks).forEach(k => attemptedFallbacks[k] = false);
-    
-    const preferredEngine = getPreferredPlayerEngine(url);
-    parallelEngineAttempts = 1;
-    setPlayerSource(url, preferredEngine, false);
-    engineTimeoutHandle = setTimeout(() => {
-        if (!parallelEngineSuccessful) {
-            fallbackToNextLink();
-        }
-    }, 7000);
+var satActiveEngine='native',satActiveUrl='',satActiveName='',satActiveImage='',satKidsPlayerMode='primary',satFallbackCycle=0,satActiveHls=null,satActiveShaka=null,satActiveVideoJs=null,satActiveDplayer=null,satActiveClappr=null,satEngineTimer=null,satEngineToken=0,satQualitySources=[],satQualityIndex=0;
+
+function satSetKidsPlayerMode(mode){satKidsPlayerMode=mode;var engineSelect=document.getElementById('satEngineSelect'),qualityMenu=document.querySelector('#satPlayer .quality-menu'),primaryButton=document.getElementById('satPrimaryPlayerBtn'),backupButton=document.getElementById('satBackupPlayerBtn');if(engineSelect)engineSelect.style.display=mode==='primary'?'':'none';if(qualityMenu)qualityMenu.style.display=mode==='primary'?'':'none';if(primaryButton)primaryButton.classList.toggle('active',mode==='primary');if(backupButton)backupButton.classList.toggle('active',mode==='backup');}
+
+function satStopKidsMedia(){document.querySelectorAll('#satPlayer audio, #satPlayer video').forEach(function(media){try{media.pause();media.muted=true;media.volume=0;media.removeAttribute('src');media.load();}catch(e){}});document.querySelectorAll('#satVideoWrap iframe').forEach(function(frame){frame.remove();});}
+
+function satResetPlayers(){
+  satEngineToken++;
+  if(satEngineTimer){clearTimeout(satEngineTimer);satEngineTimer=null;}
+  satStopKidsMedia();
+  try{if(satActiveHls)satActiveHls.destroy();}catch(e){}
+  try{if(satActiveShaka)satActiveShaka.destroy();}catch(e){}
+  try{if(satActiveVideoJs)satActiveVideoJs.dispose();}catch(e){}
+  try{if(satActiveDplayer)satActiveDplayer.destroy();}catch(e){}
+  try{if(satActiveClappr)satActiveClappr.destroy();}catch(e){}
+  satActiveHls=null;satActiveVideoJs=null;satActiveDplayer=null;satActiveClappr=null;satActiveShaka=null;
+  if(satWrapEl){
+    satWrapEl.querySelectorAll('[data-player-host]').forEach(function(host){host.remove();});
+  }
+  try{satEnsureKidsVideo();}catch(e){}
+  if(satVideoEl){
+    satVideoEl.style.display='block';
+    satVideoEl.controls=true;
+  }
+  satQualitySources=[];satQualityIndex=0;
+  var satQualityToggle=document.getElementById('satQualityToggle');
+  var satQualityOptions=document.getElementById('satQualityOptions');
+  if(satQualityToggle)satQualityToggle.style.display='none';
+  if(satQualityOptions){satQualityOptions.innerHTML='';satQualityOptions.classList.remove('open');}
+  satHideMsg();
+  try{if(satPlayerLoader)satPlayerLoader.classList.remove('show');if(satPlayerFailure)satPlayerFailure.classList.remove('show');}catch(e){}
 }
+
+function satQualityLabel(level,index){var name=level.name||(level.attrs&&level.attrs.NAME)||(level.attributes&&level.attributes.NAME);if(name)return String(name);if(level.height)return level.height+'p';if(level.bitrate)return Math.round(level.bitrate/1000)+'kbps';return 'جودة '+(index+1);}
+
+function satShowQualities(hls,token){var levels=hls.levels||[];if(token!==satEngineToken||levels.length<2)return;satQualitySources=levels.map(function(level,index){return {label:satQualityLabel(level,index),index:index};});var toggle=document.getElementById('satQualityToggle'),options=document.getElementById('satQualityOptions');toggle.style.display='inline-block';options.innerHTML='';satQualitySources.forEach(function(source,index){var button=document.createElement('button');button.type='button';button.textContent=source.label;button.onclick=function(){satQualityIndex=index;hls.currentLevel=source.index;options.classList.remove('open');};options.appendChild(button);});}
+
+function satCreateHost(id){var host=document.createElement('div');host.id=id;host.dataset.playerHost='true';host.style.cssText='position:absolute;inset:0;width:100%;height:100%;background:#000;';satWrapEl.appendChild(host);return host;}
+
+function satPlayWithEngine(url,engine,token,failed){
+  satActiveEngine=engine;
+  if(!satVideoEl || !satWrapEl){failed();return;}
+  satVideoEl.style.display=engine==='native'||engine==='videojs'||engine==='hlsjs'?'block':'none';
+  try{
+    if(engine==='native'){
+      satVideoEl.src=url;
+      satVideoEl.onplaying=function(){if(token===satEngineToken)satFinishKidsEngine(token);};
+      satVideoEl.onerror=function(){if(token===satEngineToken)failed();};
+      satVideoEl.play().catch(function(){if(token===satEngineToken)failed();});
+      return;
+    }
+    if(engine==='hlsjs'&&window.Hls&&Hls.isSupported()){
+      try{satActiveHls=new Hls();satActiveHls.loadSource(url);satActiveHls.attachMedia(satVideoEl);satActiveHls.on(Hls.Events.MANIFEST_PARSED,function(){satShowQualities(satActiveHls,token);satVideoEl.play().catch(function(){});});satActiveHls.on(Hls.Events.FRAG_LOADED,function(){if(token===satEngineToken)satFinishKidsEngine(token);});satActiveHls.on(Hls.Events.ERROR,function(event,data){if(data&&data.fatal&&token===satEngineToken)failed();});return;}catch(e){if(token===satEngineToken)failed();return;}
+    }
+    if(engine==='videojs'&&window.videojs){
+      try{satActiveVideoJs=videojs(satVideoEl,{autoplay:true,controls:true,responsive:true,fluid:false});satActiveVideoJs.src({src:url,type:'application/x-mpegURL'});satActiveVideoJs.on('playing',function(){if(token===satEngineToken)satFinishKidsEngine(token);});satActiveVideoJs.on('error',function(){if(token===satEngineToken)failed();});satActiveVideoJs.play().catch(function(){});return;}catch(e){if(token===satEngineToken)failed();return;}
+    }
+    if(engine==='shaka'&&window.shaka&&shaka.Player&&shaka.Player.isBrowserSupported()){
+      try{satActiveShaka=new shaka.Player(satVideoEl);satActiveShaka.load(url).then(function(){satVideoEl.play().then(function(){if(token===satEngineToken)satFinishKidsEngine(token);}).catch(function(){if(token===satEngineToken)failed();});}).catch(function(){if(token===satEngineToken)failed();});return;}catch(e){if(token===satEngineToken)failed();return;}
+    }
+    if(engine==='dplayer'&&window.DPlayer){
+      try{var dHost=satCreateHost('sat-dplayer-host');satActiveDplayer=new DPlayer({container:dHost,autoplay:true,video:{url:url,type:'hls'}});satActiveDplayer.on('playing',function(){if(token===satEngineToken)satFinishKidsEngine(token);});satActiveDplayer.on('error',function(){if(token===satEngineToken)failed();});return;}catch(e){if(token===satEngineToken)failed();return;}
+    }
+    if(engine==='clappr'&&window.Clappr){
+      try{var cHost=satCreateHost('sat-clappr-host');satActiveClappr=new Clappr.Player({source:url,parentId:'#'+cHost.id,autoPlay:true,mute:false});satActiveClappr.on(Clappr.Events.PLAYER_READY,function(){if(token===satEngineToken)satFinishKidsEngine(token);});satActiveClappr.on(Clappr.Events.PLAYER_ERROR,function(){if(token===satEngineToken)failed();});return;}catch(e){if(token===satEngineToken)failed();return;}
+    }
+  }catch(e){if(token===satEngineToken)failed();}
+  if(token===satEngineToken)failed();
+}
+
+function satFinishKidsEngine(token){if(token!==satEngineToken)return;if(satEngineTimer){clearTimeout(satEngineTimer);satEngineTimer=null;}hidePlayerLoader('sat');try{satPlayerFailure.classList.remove('show');}catch(e){}}
+
+function buildUrlVariants(url){
+  var variants=[url];
+  if(/^http:\/\//i.test(url)){var u=url.replace(/^http:/i,'https:');if(variants.indexOf(u)===-1)variants.push(u);}
+  return variants;
+}
+
+function satPlayVideo(url,name,image,automatic){
+  satResetPlayers();
+  satVideoEl.muted=false;
+  satVideoEl.volume=1;
+  satActiveUrl=url;
+  satActiveName=name||satActiveName||'';
+  satActiveImage=image||satActiveImage||'';
+  if(!automatic)satFallbackCycle=0;
+  satSetKidsPlayerMode('primary');satHideMsg();
+  showPlayerLoader('sat');
+  var satRetryLoaderBtn=document.getElementById('satRetryLoaderBtn');
+  if(satRetryLoaderBtn){satRetryLoaderBtn.onclick=function(){try{satPlayerFailure.classList.remove('show');}catch(e){}satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);};}
+  var token=satEngineToken;
+  var selected=document.getElementById('satEngineSelect').value;
+  var baseEngines=selected==='auto'?['native','hlsjs','videojs','dplayer','clappr','shaka']:[selected,'native','hlsjs','videojs','dplayer','clappr','shaka'];
+  var engines=[];
+  var variants=buildUrlVariants(url);
+  for(var v=0;v<variants.length;v++){for(var e=0;e<baseEngines.length;e++){engines.push({engine:baseEngines[e],url:variants[v]});}}
+  var index=0;
+  function next(){
+    if(token!==satEngineToken)return;
+    if(index>=engines.length){
+      if(satFallbackCycle===0){satFallbackCycle=1;satShowMsg('⚠ تعذر التشغيل، جاري الانتقال للمشغل الاحتياطي...');setTimeout(function(){if(token===satEngineToken&&satActiveUrl===url)satPlayBackupVideo(url,satActiveName,satActiveImage);},500);}
+      else{hidePlayerLoader('sat');showPlayerFailure('sat','⚠ تعذر تشغيل رابط البث بالمشغلين المتاحين.',function(){satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);});}
+      return;
+    }
+    var item=engines[index++];
+    var advanced=false;
+    var advance=function(){if(advanced||token!==satEngineToken)return;advanced=true;next();};
+    satResetPlayersForEngine();
+    satVideoEl.muted=false;
+    satVideoEl.volume=1;
+    satEngineTimer=setTimeout(advance,4500);
+    satPlayWithEngine(item.url,item.engine,token,advance);
+  }
+  next();
+}
+
+function satPlayBackupVideo(url,name,image){
+  satResetPlayers();
+  satVideoEl.muted=false;
+  satVideoEl.volume=1;
+  satActiveUrl=url;satActiveName=name||satActiveName||'';satActiveImage=image||satActiveImage||'';satSetKidsPlayerMode('backup');satHideMsg();showPlayerLoader('sat');
+  var satRetryLoaderBtn2=document.getElementById('satRetryLoaderBtn');
+  if(satRetryLoaderBtn2){satRetryLoaderBtn2.onclick=function(){try{satPlayerFailure.classList.remove('show');}catch(e){}satPlayBackupVideo(satActiveUrl,satActiveName,satActiveImage);};}
+  var variants=buildUrlVariants(url);
+  var vIndex=0;
+  function tryNext(){
+    var u=variants[vIndex];
+    if(!u){hidePlayerLoader('sat');showPlayerFailure('sat','⚠ المشغل الاحتياطي غير مدعوم في هذا المتصفح.',function(){satPlayBackupVideo(satActiveUrl,satActiveName,satActiveImage);});return;}
+    if(!window.shaka||!shaka.Player.isBrowserSupported()){hidePlayerLoader('sat');showPlayerFailure('sat','⚠ المشغل الاحتياطي غير مدعوم في هذا المتصفح.',function(){satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);});return;}
+    try{satActiveShaka=new shaka.Player(satVideoEl);satActiveShaka.load(u).then(function(){hidePlayerLoader('sat');try{satPlayerFailure.classList.remove('show');}catch(e){}satVideoEl.play().catch(function(){});}).catch(function(){vIndex++;if(vIndex<variants.length){satActiveShaka=null;tryNext();}else{hidePlayerLoader('sat');showPlayerFailure('sat','⚠ فشل المشغل الاحتياطي، جاري الرجوع للمشغل الرئيسي...',function(){satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);});setTimeout(function(){if(satActiveUrl===url&&satKidsPlayerMode==='backup')satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);},1200);}});}catch(e){vIndex++;if(vIndex<variants.length)tryNext();else{hidePlayerLoader('sat');showPlayerFailure('sat','⚠ تعذر تشغيل المشغل الاحتياطي.',function(){satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);});}}
+  }
+  tryNext();
+}
+
+function satResetPlayersForEngine(){
+  if(satEngineTimer){clearTimeout(satEngineTimer);satEngineTimer=null;}
+  try{if(satActiveHls)satActiveHls.destroy();}catch(e){}
+  try{if(satActiveShaka)satActiveShaka.destroy();}catch(e){}
+  try{if(satActiveVideoJs)satActiveVideoJs.dispose();}catch(e){}
+  try{if(satActiveDplayer)satActiveDplayer.destroy();}catch(e){}
+  try{if(satActiveClappr)satActiveClappr.destroy();}catch(e){}
+  satActiveHls=null;satActiveShaka=null;satActiveVideoJs=null;satActiveDplayer=null;satActiveClappr=null;
+  satWrapEl.querySelectorAll('[data-player-host]').forEach(function(host){host.remove();});
+  satEnsureKidsVideo();
+  try{satVideoEl.pause();satVideoEl.removeAttribute('src');satVideoEl.load();}catch(e){}
+  satVideoEl.style.display='block';
+}
+
+function satEnsureKidsVideo(){
+  if(satWrapEl.contains(satVideoEl))return;
+  satVideoEl=document.createElement('video');satVideoEl.id='satVideoEl';satVideoEl.controls=true;satVideoEl.autoplay=true;satVideoEl.playsInline=true;
+  satWrapEl.insertBefore(satVideoEl,satWrapEl.firstChild);
+}
+
+document.getElementById('satQualityToggle').onclick=function(event){event.stopPropagation();document.getElementById('satQualityOptions').classList.toggle('open');};
+document.getElementById('satEngineSelect').onchange=function(){if(satActiveUrl)satPlayVideo(satActiveUrl,satActiveName,satActiveImage);};
+document.getElementById('satPrimaryPlayerBtn').onclick=function(){satSetKidsPlayerMode('primary');if(satActiveUrl)satPlayVideo(satActiveUrl,satActiveName,satActiveImage);};
+document.getElementById('satBackupPlayerBtn').onclick=function(){satSetKidsPlayerMode('backup');if(satActiveUrl)satPlayBackupVideo(satActiveUrl,satActiveName,satActiveImage);};
+document.addEventListener('click',function(event){if(!event.target.closest('#satPlayer .quality-menu'))document.getElementById('satQualityOptions').classList.remove('open');});
+
+var satLibsLoaded=false;
+function loadScriptOnce(src,test){
+  return new Promise(function(resolve){
+    if(test()){resolve();return;}
+    var s=document.createElement('script');s.src=src;s.async=false;s.onload=function(){resolve();};s.onerror=function(){resolve();};
+    document.head.appendChild(s);
+  });
+}
+function loadSatLibraries(){
+  if(satLibsLoaded){return Promise.resolve();}
+  var chain=Promise.resolve();
+  chain=chain.then(function(){return loadScriptOnce('https://cdn.jsdelivr.net/npm/hls.js@1',function(){return !!window.Hls;});});
+  chain=chain.then(function(){return loadScriptOnce('https://cdn.jsdelivr.net/npm/dashjs@4/dist/dash.all.min.js',function(){return !!window.dashjs;});});
+  chain=chain.then(function(){return loadScriptOnce('https://cdn.jsdelivr.net/npm/shaka-player@4/dist/shaka-player.compiled.js',function(){return !!window.shaka;});});
+  chain=chain.then(function(){return loadScriptOnce('https://cdn.jsdelivr.net/npm/flv.js@1/dist/flv.min.js',function(){return !!window.flvjs;});});
+  chain=chain.then(function(){return loadScriptOnce('https://vjs.zencdn.net/8.10.0/video.min.js',function(){return !!window.videojs;});});
+  chain=chain.then(function(){return loadScriptOnce('https://cdn.jsdelivr.net/npm/dplayer@1/dist/DPlayer.min.js',function(){return !!window.DPlayer;});});
+  chain=chain.then(function(){return loadScriptOnce('https://cdn.jsdelivr.net/npm/clappr@0/dist/clappr.min.js',function(){return !!window.Clappr;});});
+  return chain.then(function(){satLibsLoaded=true;});
+}
+
 window.currentViewMode = 'home';
 window.currentExternalUrl = '';
 
@@ -1450,24 +1199,6 @@ function renderSearchResults(query) {
     const matches = [...categories,...channels].filter(item => !term || normalizeSearchText(item.name).includes(term)).slice(0,50);
     results.innerHTML = matches.length ? matches.map((item,index)=>`<button class="search-result" type="button" data-search-index="${index}"><strong class="search-result-name">${escapeHtml(item.name)}</strong><small class="search-result-type">${item.type}</small></button>`).join('') : '<div class="search-empty">لا توجد نتائج مطابقة</div>';
     results.querySelectorAll('[data-search-index]').forEach((button,index)=>button.onclick=()=>matches[index].action());
-}
-
-function getPreferredPlayerEngine(url) {
-    const isiOS = /iP(hone|od|ad)/.test(navigator.userAgent) && !window.MSStream;
-    if (getMediaType(url) === 'application/dash+xml') return 'shaka';
-    if (isiOS && url && url.includes('.m3u8')) {
-        return 'native';
-    }
-    return 'videojs';
-}
-
-function getSelectedPlayerEngine(url) {
-    const select = $('playerEngineSelect');
-    const choice = select ? select.value : 'auto';
-    if (choice === 'auto') {
-        return getPreferredPlayerEngine(url);
-    }
-    return choice;
 }
 
 function toast(message, duration = 2600) {
@@ -1679,473 +1410,6 @@ function parseChannelLinks(ch) {
     return links;
 }
 
-function showPlayer(pushHistory = true) {
-    $('playerContainer').classList.remove('hidden');
-    document.body.classList.add('player-open');
-    document.body.style.overflow = 'hidden';
-    if (pushHistory) pushState();
-    showQualityButtons();
-    showPlayerControls();
-}
-
-function showQualityButtons() {
-    updateQualityMenuVisibility();
-}
-
-function updateQualityMenuVisibility() {
-    const toggle = $('qualityToggle');
-    if (toggle) {
-        toggle.style.display = qualityMenuAvailable ? 'flex' : 'none';
-    }
-}
-
-function updateQualityMenu() {
-    const list = $('qualityOptionList');
-    if (!list) return;
-    list.classList.add('hidden');
-    if (!qualityMenuAvailable || currentQualityMode !== 'hls' || !currentQualitySources || currentQualitySources.length <= 1) {
-        list.innerHTML = '';
-        return;
-    }
-    list.innerHTML = '';
-    currentQualitySources.forEach((source, idx) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'quality-option-item' + (idx === currentQualityIndex ? ' active' : '');
-        btn.textContent = source.label || `الجودة ${idx + 1}`;
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            currentQualityIndex = idx;
-            if (source.rep && typeof source.rep.enabled === 'function') {
-                currentQualitySources.forEach((item, i) => {
-                    if (item.rep && typeof item.rep.enabled === 'function') item.rep.enabled(i === idx);
-                });
-            } else if (source.hls && Number.isInteger(source.level)) {
-                source.hls.currentLevel = source.level;
-            }
-            document.querySelectorAll('.quality-option-item').forEach((item, i) => item.classList.toggle('active', i === idx));
-            closeQualityMenu();
-        };
-        list.appendChild(btn);
-    });
-}
-
-function toggleQualityMenu(event) {
-    if (event) event.stopPropagation();
-    const list = $('qualityOptionList');
-    if (list) list.classList.toggle('hidden');
-}
-
-function closeQualityMenu() {
-    const list = $('qualityOptionList');
-    if (list) list.classList.add('hidden');
-}
-
-document.addEventListener('click', closeQualityMenu);
-
-function getHlsRepresentations(player) {
-    const tech = player.tech({ IWillNotUseThisInPlugins: true });
-    if (!tech || !tech.vhs) return [];
-    if (typeof tech.vhs.representations === 'function') {
-        return tech.vhs.representations().map(rep => ({
-            label: getQualityLabel(rep),
-            rep
-        }));
-    }
-    const master = tech.vhs.playlists && tech.vhs.playlists.master;
-    if (!master || !Array.isArray(master.playlists)) return [];
-    return master.playlists.map((playlist, index) => ({
-        label: getQualityLabel(playlist, index),
-        playlist
-    }));
-}
-
-function getQualityLabel(source, index = 0) {
-    const attributes = source?.attributes || source?.attrs || source?.playlist?.attributes || {};
-    const originalName = source?.name || attributes.NAME || attributes.name;
-    if (originalName) return String(originalName);
-    const resolution = source?.height ? `${source.height}p` : attributes.RESOLUTION?.height ? `${attributes.RESOLUTION.height}p` : '';
-    if (resolution) return resolution;
-    const bitrate = source?.bitrate || source?.bandwidth || attributes.BANDWIDTH;
-    return bitrate ? `${Math.round(Number(bitrate) / 1000)}kbps` : `جودة ${index + 1}`;
-}
-
-function detectHlsQualities(player) {
-    const reps = getHlsRepresentations(player);
-    if (reps.length <= 1) {
-        qualityMenuAvailable = false;
-        updateQualityMenuVisibility();
-        return;
-    }
-    currentQualityMode = 'hls';
-    currentQualitySources = reps;
-    currentQualityIndex = 0;
-    qualityMenuAvailable = true;
-    updateQualityMenu();
-    showQualityButtons();
-}
-
-function detectHlsJsQualities(hls) {
-    const levels = hls?.levels || [];
-    if (levels.length <= 1) {
-        qualityMenuAvailable = false;
-        updateQualityMenuVisibility();
-        return;
-    }
-    currentQualityMode = 'hls';
-    currentQualitySources = levels.map((level, index) => ({
-        label: getQualityLabel(level, index),
-        level: index,
-        hls
-    }));
-    currentQualityIndex = hls.currentLevel >= 0 ? hls.currentLevel : 0;
-    qualityMenuAvailable = true;
-    updateQualityMenu();
-    showQualityButtons();
-}
-
-function setupQualityButtons(links, mode = 'links') {
-    const container = $('qualityButtons');
-    if (container) container.innerHTML = '';
-    currentQualityMode = mode;
-    currentQualitySources = [];
-    qualityMenuAvailable = false;
-    if (mode === 'links' && links.length > 1 && container) {
-        links.forEach((link, index) => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = `quality-button${index === currentLinkIndex ? ' active' : ''}`;
-            button.textContent = link.label || `رابط ${index + 1}`;
-            button.title = link.label || `رابط ${index + 1}`;
-            button.onclick = event => {
-                event.stopPropagation();
-                currentLinkIndex = index;
-                currentQualityIndex = index;
-                document.querySelectorAll('.quality-button').forEach((item, itemIndex) => {
-                    item.classList.toggle('active', itemIndex === index);
-                });
-                const engineSelect = $('playerEngineSelect');
-                if (engineSelect) engineSelect.value = 'auto';
-                tryEnginesInParallel(link.url, 5);
-                showPlayerControls();
-            };
-            container.appendChild(button);
-        });
-    }
-    updateQualityMenu();
-    showQualityButtons();
-}
-
-function cleanupNativePlayer() {
-    const nativeEl = $('native-video');
-    if (nativePlayerInstance && typeof nativePlayerInstance.destroy === 'function') nativePlayerInstance.destroy();
-    nativePlayerInstance = null;
-    if (nativeEl) {
-        nativeEl.pause();
-        nativeEl.src = '';
-        nativeEl.classList.add('hidden');
-    }
-}
-
-function cleanupPlayerJS() {
-    const playerjsEl = $('playerjs-container');
-    if (playerjsEngineInstance && typeof playerjsEngineInstance.destroy === 'function') playerjsEngineInstance.destroy();
-    playerjsEngineInstance = null;
-    if (playerjsEl) {
-        playerjsEl.innerHTML = '';
-        playerjsEl.classList.add('hidden');
-    }
-}
-
-function initializePlayerJS(url, sourceToken = playerSourceToken) {
-    const playerjsEl = $('playerjs-container');
-    if (!playerjsEl) {
-        setPlayerSource(url, 'native', false);
-        return;
-    }
-    if (typeof window.Playerjs === 'undefined') {
-        if (!attemptedFallbacks.native) {
-            attemptedFallbacks.native = true;
-            setPlayerSource(url, 'native', false);
-            return;
-        }
-        if (!attemptedFallbacks.videojs) {
-            attemptedFallbacks.videojs = true;
-            setPlayerSource(url, 'videojs', false);
-            return;
-        }
-        fallbackToNextLink();
-        return;
-    }
-    cleanupPlayerJS();
-    showActivePlayer('playerjs');
-    playerjsEngineInstance = new Playerjs({ id: 'playerjs-container', file: url, autoplay: true });
-    if (playerjsEngineInstance && typeof playerjsEngineInstance.on === 'function') {
-        playerjsEngineInstance.on('error', () => {
-            if (sourceToken !== playerSourceToken) return;
-            if (!attemptedFallbacks.native) {
-                attemptedFallbacks.native = true;
-                setPlayerSource(url, 'native', false);
-                return;
-            }
-            if (!attemptedFallbacks.videojs) {
-                attemptedFallbacks.videojs = true;
-                setPlayerSource(url, 'videojs', false);
-                return;
-            }
-            fallbackToNextLink();
-        });
-    }
-}
-
-function showActivePlayer(engine) {
-    cleanupAllPlayers();
-    let id = '';
-    switch(engine) {
-        case 'videojs': case 'hlsjs': case 'flvjs': id = 'video-player'; break;
-        case 'shaka': id = 'shaka-video'; break;
-        case 'dashjs': id = 'dashjs-video'; break;
-        case 'clappr': id = 'clappr-container'; break;
-        case 'plyr': id = 'plyr-video'; break;
-        case 'dplayer': id = 'dplayer-container'; break;
-        case 'mediaelement': id = 'mediaelement-video'; break;
-        case 'openplayer': id = 'openplayer-container'; break;
-        case 'mediachrome': id = 'mediachrome-container'; break;
-        case 'playerjs': id = 'playerjs-container'; break;
-        case 'native': id = 'native-video'; break;
-    }
-    if (id && $(id)) $(id).classList.remove('hidden');
-}
-
-function ensureVideoElement() {
-    let video = $('video-player');
-    if (video) return video;
-    const wrapper = $('player-wrapper');
-    if (!wrapper) return null;
-    video = document.createElement('video');
-    video.id = 'video-player';
-    video.className = 'video-js vjs-default-skin vjs-big-play-centered';
-    video.setAttribute('playsinline', '');
-    video.setAttribute('crossorigin', 'anonymous');
-    const error = $('player-error-msg');
-    wrapper.insertBefore(video, error || wrapper.firstChild);
-    return video;
-}
-
-function initializeNativePlayer(url, sourceToken = playerSourceToken) {
-    const nativeEl = $('native-video');
-    if (!nativeEl) return;
-    cleanupNativePlayer();
-    showActivePlayer('native');
-    nativeEl.controls = true;
-    nativeEl.autoplay = true;
-    nativeEl.playsInline = true;
-    nativeEl.removeAttribute('src');
-    nativeEl.load();
-    if (url.includes('m3u8') && window.Hls && Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(nativeEl);
-        nativePlayerInstance = hls;
-    } else {
-        nativeEl.src = url;
-        nativePlayerInstance = nativeEl;
-    }
-    nativeEl.onloadedmetadata = () => nativeEl.play().catch(() => {});
-    if (url.includes('m3u8') && window.Hls && Hls.isSupported()) {
-        const hlsRef = nativePlayerInstance;
-        hlsRef.on(Hls.Events.ERROR, (event, data) => {
-            if (data.fatal) {
-                hlsRef.destroy();
-                fallbackToNextEngine(url, sourceToken);
-            }
-        });
-    }
-    nativeEl.onerror = () => {
-        fallbackToNextEngine(url, sourceToken);
-    };
-}
-
-function getMediaType(url) {
-    try {
-        const pathname = new URL(url, window.location.href).pathname.toLowerCase();
-        if (pathname.endsWith('.m3u8')) return 'application/x-mpegURL';
-        if (pathname.endsWith('.mpd')) return 'application/dash+xml';
-        if (pathname.endsWith('.webm')) return 'video/webm';
-        if (pathname.endsWith('.ogg') || pathname.endsWith('.ogv')) return 'video/ogg';
-        if (pathname.endsWith('.flv')) return 'video/x-flv';
-    } catch (error) {}
-    return 'video/mp4';
-}
-
-function setPlayerSource(url, engine = 'videojs', resetFallbacks = true) {
-    if (!url) return;
-
-    const sourceToken = ++playerSourceToken;
-    
-    currentPlayerEngine = engine;
-    if (resetFallbacks) {
-        Object.keys(attemptedFallbacks).forEach(k => attemptedFallbacks[k] = false);
-        parallelEngineSuccessful = false;
-    }
-    attemptedFallbacks[engine] = true;
-    showActivePlayer(engine);
-
-    if (engine === 'videojs' || engine === 'hlsjs' || engine === 'flvjs') {
-        if (!ensureVideoElement()) {
-            fallbackToNextEngine(url, sourceToken);
-            return;
-        }
-    }
-
-    const engineSelect = $('playerEngineSelect');
-    if (engineSelect) {
-        engineSelect.value = engine;
-    }
-
-    try {
-        switch(engine) {
-            case 'videojs':
-                videojsInstance = videojs('video-player', { autoplay: true, controls: true, responsive: true, fluid: false, preload: 'auto', muted: false });
-                videojsInstance.src({ src: url, type: getMediaType(url) });
-                videojsInstance.ready(function() {
-                    if (sourceToken !== playerSourceToken) return;
-                    this.play().catch(() => {});
-                });
-                videojsInstance.on('loadedmetadata', () => detectHlsQualities(videojsInstance));
-                videojsInstance.one('playing', () => markPlayerReady(sourceToken));
-                videojsInstance.on('error', () => { if (sourceToken === playerSourceToken) fallbackToNextEngine(url); });
-                break;
-            case 'hlsjs':
-                if (Hls.isSupported()) {
-                    hlsjsInstance = new Hls();
-                    hlsjsInstance.loadSource(url);
-                    const v = $('video-player');
-                    hlsjsInstance.attachMedia(v);
-                    hlsjsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-                        detectHlsJsQualities(hlsjsInstance);
-                        v.play().catch(() => {});
-                    });
-                    v.addEventListener('playing', () => markPlayerReady(sourceToken), { once: true });
-                    hlsjsInstance.on(Hls.Events.ERROR, (e, data) => { if (data.fatal && sourceToken === playerSourceToken) fallbackToNextEngine(url); });
-                } else fallbackToNextEngine(url);
-                break;
-            case 'shaka':
-                const sv = $('shaka-video');
-                shakaPlayerInstance = new shaka.Player(sv);
-                shakaPlayerInstance.load(url).then(() => {
-                    markPlayerReady(sourceToken);
-                    sv.play().catch(() => fallbackToNextEngine(url, sourceToken));
-                }).catch(() => fallbackToNextEngine(url, sourceToken));
-                shakaPlayerInstance.addEventListener('error', () => fallbackToNextEngine(url, sourceToken));
-                break;
-            case 'dashjs':
-                const dv = $('dashjs-video');
-                dashjsInstance = dashjs.MediaPlayer().create();
-                dashjsInstance.initialize(dv, url, true);
-                dv.play().catch(e => console.error("DASH Autoplay failed:", e));
-                dashjsInstance.on('error', () => fallbackToNextEngine(url, sourceToken));
-                break;
-            case 'clappr':
-                clapprInstance = new Clappr.Player({ source: url, parentId: '#clappr-container', autoPlay: true, mute: false });
-                clapprInstance.on(Clappr.Events.PLAYER_READY, () => {
-                    const cv = document.querySelector('#clappr-container video');
-                    if (cv) cv.play().catch(e => console.error("Clappr Autoplay failed:", e));
-                });
-                clapprInstance.on(Clappr.Events.PLAYER_ERROR, () => fallbackToNextEngine(url, sourceToken));
-                break;
-            case 'plyr':
-                const pv = $('plyr-video');
-                plyrInstance = new Plyr(pv, { autoplay: true });
-                pv.src = url;
-                pv.play().catch(e => console.error("Plyr Autoplay failed:", e));
-                pv.onerror = () => fallbackToNextEngine(url, sourceToken);
-                break;
-            case 'dplayer':
-                dplayerInstance = new DPlayer({ container: $('dplayer-container'), video: { url: url, type: url.includes('m3u8') ? 'hls' : 'auto' }, autoplay: true });
-                dplayerInstance.play();
-                dplayerInstance.on('error', () => fallbackToNextEngine(url, sourceToken));
-                break;
-            case 'mediaelement':
-                mediaelementInstance = new MediaElementPlayer('mediaelement-video', { 
-                    success: (me) => { 
-                        me.setSrc(url); 
-                        me.play().catch(e => console.error("MediaElement Autoplay failed:", e));
-                        me.addEventListener('error', () => fallbackToNextEngine(url, sourceToken));
-                    },
-                    error: () => fallbackToNextEngine(url, sourceToken)
-                });
-                break;
-            case 'openplayer':
-                openplayerInstance = new OpenPlayerJS('openplayer-container');
-                openplayerInstance.init();
-                openplayerInstance.src = { src: url, type: 'application/x-mpegURL' };
-                const ov = document.querySelector('#openplayer-container video');
-                if (ov) {
-                    ov.play().catch(e => console.error("OpenPlayer Autoplay failed:", e));
-                    ov.onerror = () => fallbackToNextEngine(url, sourceToken);
-                }
-                break;
-            case 'mediachrome':
-                const mv = $('mediachrome-video');
-                mv.src = url;
-                mv.play().catch(e => console.error("MediaChrome Autoplay failed:", e));
-                mv.onerror = () => fallbackToNextEngine(url, sourceToken);
-                break;
-            case 'flvjs':
-                if (flvjs.isSupported()) {
-                    const fv = $('video-player');
-                    flvjsInstance = flvjs.createPlayer({ type: 'flv', url: url });
-                    flvjsInstance.attachMediaElement(fv);
-                    flvjsInstance.load();
-                    flvjsInstance.play().catch(e => console.error("FLV Autoplay failed:", e));
-                    flvjsInstance.on(flvjs.Events.ERROR, () => fallbackToNextEngine(url, sourceToken));
-                } else fallbackToNextEngine(url);
-                break;
-            case 'jwplayer':
-                if (typeof jwplayer !== 'undefined') {
-                    jwplayerInstance = jwplayer('jwplayer-container').setup({
-                        file: url,
-                        autostart: true,
-                        mute: false,
-                        width: '100%',
-                        height: '100%'
-                    });
-                    jwplayerInstance.on('error', () => fallbackToNextEngine(url, sourceToken));
-                    jwplayerInstance.on('setupError', () => fallbackToNextEngine(url, sourceToken));
-                } else fallbackToNextEngine(url);
-                break;
-            case 'flowplayer':
-                if (typeof flowplayer !== 'undefined') {
-                    flowplayerInstance = flowplayer('#flowplayer-container', {
-                        clip: { sources: [{ type: 'application/x-mpegurl', src: url }] },
-                        autoplay: true
-                    });
-                    flowplayerInstance.on('error', () => fallbackToNextEngine(url, sourceToken));
-                } else fallbackToNextEngine(url);
-                break;
-            case 'playerjs':
-                initializePlayerJS(url, sourceToken);
-                break;
-            case 'native':
-                initializeNativePlayer(url, sourceToken);
-                break;
-        }
-    } catch(e) {
-        console.error(`Error in engine ${engine}:`, e);
-        fallbackToNextEngine(url, sourceToken);
-    }
-}
-
-function showPlayerError(msg) {
-    const el = $('player-error-msg');
-    if (el) {
-        el.textContent = msg;
-        el.classList.remove('hidden');
-        setTimeout(() => el.classList.add('hidden'), 3500);
-    }
-}
-
 function hidePlayer() {
     stopAllMedia();
     cleanupAllPlayers();
@@ -2183,9 +1447,7 @@ function hidePlayer() {
     }
 
     currentChannelId = null;
-    currentPlayerEngine = null;
     currentChannelLinks = [];
-    currentQualitySources = [];
 }
 
 window.addEventListener('pagehide', () => {
@@ -2196,23 +1458,6 @@ window.addEventListener('beforeunload', stopAllMedia);
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') stopAllMedia();
 });
-
-async function selectChannel(channel, pushHistory = true) {
-    const links = parseChannelLinks(channel);
-    if (!links.length) {
-        if ($('grid')) $('grid').innerHTML = '<div class="card message-card">لا يوجد رابط بث صالح لهذه القناة</div>';
-        return;
-    }
-    currentChannelId = channel.id;
-    currentChannelLinks = links;
-    currentLinkIndex = 0;
-    currentQualityIndex = 0;
-    currentQualityMode = 'links';
-    setupQualityButtons(links, 'links');
-    showPlayer(pushHistory);
-    
-    tryEnginesInParallel(links[0].url, 5);
-}
 
 async function renderCurrentView() {
     const grid = $('grid');
@@ -2270,69 +1515,6 @@ async function renderCurrentView() {
         grid.appendChild(card);
     });
     window.scrollTo(0, scrollPos);
-}
-
-let playerControlsTimer = null;
-function showPlayerControls() {
-    const qButtons = $('qualityButtons');
-    const qMenu = $('qualityMenu');
-    if (qButtons) qButtons.classList.add('show');
-    if (qMenu) qMenu.classList.add('show');
-
-    if (playerControlsTimer) clearTimeout(playerControlsTimer);
-    playerControlsTimer = setTimeout(() => {
-        if (qMenu) qMenu.classList.remove('show');
-        if (qButtons && !(currentQualityMode === 'links' && currentChannelLinks.length > 1)) {
-            qButtons.classList.remove('show');
-        }
-    }, 3000);
-}
-
-function initVideoPlayer() {
-    document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && $('playerContainer') && !$('playerContainer').classList.contains('hidden')) window.history.back();
-    });
-
-    const playerContainer = $('playerContainer');
-    if (playerContainer) {
-        ['mousemove', 'touchstart', 'click'].forEach(evt => {
-            playerContainer.addEventListener(evt, showPlayerControls);
-        });
-    }
-
-    const engineSelect = $('playerEngineSelect');
-    if (engineSelect) {
-        engineSelect.addEventListener('change', () => {
-            if (currentChannelLinks && currentChannelLinks.length > 0) {
-                const engine = engineSelect.value;
-                if (engine !== 'auto') {
-                    currentLinkIndex = 0;
-                    currentQualityIndex = 0;
-                    parallelEngineSuccessful = false;
-                    Object.keys(attemptedFallbacks).forEach(key => attemptedFallbacks[key] = false);
-                    setTimeout(() => {
-                        setPlayerSource(currentChannelLinks[0].url, engine, true);
-                        const sourceToken = playerSourceToken;
-                        engineTimeoutHandle = setTimeout(() => {
-                            if (sourceToken === playerSourceToken && !parallelEngineSuccessful) {
-                                fallbackToNextEngine(currentChannelLinks[0].url, sourceToken);
-                            }
-                        }, 5000);
-                        setupQualityButtons(currentChannelLinks, 'links');
-                    }, 150);
-                } else {
-                    currentLinkIndex = 0;
-                    currentQualityIndex = 0;
-                    Object.keys(attemptedFallbacks).forEach(k => attemptedFallbacks[k] = false);
-                    parallelEngineSuccessful = false;
-                    setTimeout(() => {
-                        tryEnginesInParallel(currentChannelLinks[0].url, 5);
-                        setupQualityButtons(currentChannelLinks, 'links');
-                    }, 150);
-                }
-            }
-        });
-    }
 }
 
 async function refreshCategoriesCache() {
@@ -2475,8 +1657,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const headerLogo = $('headerLogo');
     if (headerLogo) headerLogo.addEventListener('click', goHome);
 
-    const qualityToggle = $('qualityToggle');
-    if (qualityToggle) qualityToggle.addEventListener('click', toggleQualityMenu);
     const sidebarToggle = $('sidebarToggle');
     if (sidebarToggle) sidebarToggle.addEventListener('click', (event) => {
         event.stopPropagation();
