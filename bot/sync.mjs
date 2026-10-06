@@ -19,16 +19,16 @@ async function getJson(url, optional = false) {
 // القراءة عبر REST العام (نفس ما يفعله موقعك) فلا تحتاج مفاتيح في وضع --dry
 const readNode = async name => (await getJson(`${cfg.databaseURL}/${name}.json`, true)) || {};
 
-const [channels, streams, logos, blocklist, cats, chans] = await Promise.all([
+const [channels, streams, logos, blocklist, cats, chans, botIgnore] = await Promise.all([
   getJson(API + 'channels.json'), getJson(API + 'streams.json'),
   getJson(API + 'logos.json', true), getJson(API + 'blocklist.json', true),
-  readNode('categories'), readNode('channels')
+  readNode('categories'), readNode('channels'), readNode('botIgnore')
 ]);
 console.log(`المصدر: ${channels.length} قناة، ${streams.length} رابط`);
 
 const check = url => checkStream(url, { origin: cfg.siteOrigin, requireCors: cfg.requireCors !== false });
 
-const plan = await buildPlan({ api: { channels, streams, logos, blocklist }, cats, chans, cfg, check, only });
+const plan = await buildPlan({ api: { channels, streams, logos, blocklist }, cats, chans, cfg, check, only, ignore: new Set(Object.keys(botIgnore || {})) });
 
 plan.log.forEach(l => console.log(l));
 console.table(plan.summary);
