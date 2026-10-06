@@ -11,7 +11,7 @@
       "id": "",
       "names": ["قنوات عالمية", "القنوات العالمية"],
       "autoCreateCountries": true,
-      "countries": ["US","GB","FR","DE","ES","IT","TR","RU","IN","BR","CA","AU","JP","KR"]
+      "countries": ["US","UK","FR","DE","ES","IT","TR","RU","IN","BR","CA","AU","JP","KR"]
     }
   },
   "countryAliases": {},
