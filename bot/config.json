@@ -64,7 +64,7 @@
   "checkLinks": true,
   "requireCors": true,
   "pruneMissing": true,
-  "maxChannelsWorld": 50,
+  "maxChannelsWorld": 0,
   "checkConcurrency": 50,
   "checkTimeoutMs": 8000,
   "deleteAfterFailures": 2,
