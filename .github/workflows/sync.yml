@@ -7,7 +7,7 @@ on:
       dry:
         description: 'تجربة فقط بدون كتابة'
         type: boolean
-        default: true
+        default: false
       only:
         description: 'دول محددة مثل SA,EG (اختياري)'
         required: false
@@ -23,6 +23,13 @@ jobs:
         with:
           node-version: 20
       - run: npm install --prefix bot --no-audit --no-fund
-      - run: node bot/sync.mjs ${{ (github.event_name == 'workflow_dispatch' && inputs.dry) && '--dry' || '' }} ${{ inputs.only && format('--only={0}', inputs.only) || '' }}
+      - name: Run sync
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry }}
+          ONLY: ${{ inputs.only }}
+        run: |
+          ARGS=""
+          if [ "$DRY" = "true" ]; then ARGS="--dry"; fi
+          if [ -n "$ONLY" ]; then ARGS="$ARGS --only=$ONLY"; fi
+          node bot/sync.mjs $ARGS
