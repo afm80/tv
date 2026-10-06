@@ -1,7 +1,7 @@
 // تشغيل: node --test bot/   (محاكاة كاملة بلا شبكة ولا Firebase)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPlan, reconcile, keyOf, idsOf, linkEntries } from './lib.mjs';
+import { buildPlan, reconcile, keyOf, idsOf, linkEntries, summarizeCategory } from './lib.mjs';
 
 const CFG = () => ({
   sections: { arab: { id: '', names: ['قنوات عربية'], countries: ['SA', 'EG'], autoCreateCountries: true }, world: { id: '', names: ['قنوات عالمية'], countries: ['*'], autoCreateCountries: true } },
@@ -229,4 +229,103 @@ test('الحفظ التدريجي: دولة بلا قناة شغالة لا يُ
   await runInc(db, mkApi([['g1', 'G1', 'JP'], ['h1', 'H1', 'FR']]));
   assert.ok(!Object.values(db.cats).some(c => c.name.includes('اليابان')));
   assert.ok(Object.values(db.cats).some(c => c.name.includes('فرنسا')));
+});
+
+// ───────── أقسام حسب الفئة (أخبار، رياضة...) ─────────
+const SECS = () => [
+  { key: 'news', names: ['قنوات أخبار'], categories: ['news'], scope: 'all' },
+  { key: 'sports_arab', names: ['الرياضة العربية'], categories: ['sports'], scope: 'arab' },
+  { key: 'sports_world', names: ['الرياضة العالمية'], categories: ['sports'], scope: 'world' },
+  { key: 'kids', names: ['قنوات أطفال'], categories: ['kids', 'animation'], scope: 'all' }
+];
+const mkCatApi = list => {                         // [id,name,country,[categories]]
+  const a = mkApi(list.map(([id, n, c]) => [id, n, c]));
+  a.channels.forEach((ch, i) => { ch.categories = list[i][3]; });
+  return a;
+};
+const catCfg = () => { const c = CFG(); c.maxChannelsPerCountry = 0; c.maxChannelsWorld = 0; c.categorySections = SECS(); return c; };
+const secByName = (db, n) => Object.values(db.cats).find(c => c.name === n);
+
+test('أقسام الفئة: القناة نفسها في قسم دولتها وقسم فئتها بسجل واحد، والرياضة تنفصل بدولة القناة', async () => {
+  dead = new Set(); const db = fresh();
+  const api = mkCatApi([['n1', 'N1', 'SA', ['news']], ['s1', 'S1', 'SA', ['sports']], ['s2', 'S2', 'FR', ['sports']], ['k1', 'K1', 'JP', ['animation']], ['g1', 'G1', 'FR', ['general']]]);
+  await run(db, api, { cfg: catCfg() });
+  assert.equal(botKeys(db).length, 5);                                           // لا تكرار للسجلات
+  const news = secByName(db, 'قنوات أخبار'), sa = secByName(db, 'الرياضة العربية'), sw = secByName(db, 'الرياضة العالمية'), kids = secByName(db, 'قنوات أطفال');
+  assert.ok(news && sa && sw && kids, 'يجب إنشاء أقسام الفئات');
+  const ids = id => idsOf(db.chans[keyOf(id)]);
+  assert.ok(ids('n1').includes(news.id) && ids('n1').length === 2);              // قسم السعودية + الأخبار
+  assert.ok(ids('s1').includes(sa.id) && !ids('s1').includes(sw.id));            // سعودية → رياضة عربية
+  assert.ok(ids('s2').includes(sw.id) && !ids('s2').includes(sa.id));            // فرنسا → رياضة عالمية
+  assert.ok(ids('k1').includes(kids.id));
+  assert.equal(ids('g1').length, 1);                                             // فئة غير مضافة: قسم الدولة فقط
+  assert.deepEqual(db.chans[keyOf('s1')].categories, db.chans[keyOf('s1')].categoryIds);
+});
+
+test('أقسام الفئة: لا يُنشأ قسم لفئة لا توجد لها قناة، ويُستخدم القسم الموجود بالاسم', async () => {
+  dead = new Set(); const db = fresh();
+  db.cats.nw = { id: 'nw', name: 'قنوات اخبار', parentId: '' };                  // موجود بكتابة مختلفة (همزة)
+  const api = mkCatApi([['n1', 'N1', 'EG', ['news']]]);
+  await run(db, api, { cfg: catCfg() });
+  assert.ok(idsOf(db.chans[keyOf('n1')]).includes('nw'));
+  assert.equal(Object.values(db.cats).filter(c => c.name.includes('أخبار') || c.name.includes('اخبار')).length, 1);
+  assert.ok(!secByName(db, 'الرياضة العربية') && !secByName(db, 'قنوات أطفال'));
+});
+
+test('أقسام الفئة: قناة موجودة سابقاً تُضاف لقسم فئتها لاحقاً، والتكرار بلا تغيير = صفر كتابة', async () => {
+  dead = new Set(); const db = fresh();
+  const api = mkCatApi([['n1', 'N1', 'SA', ['news']], ['x1', 'X1', 'SA', []]]);
+  await run(db, api);                                                            // بلا أقسام فئات
+  assert.equal(idsOf(db.chans[keyOf('n1')]).length, 1);
+  const cfg = catCfg();
+  await run(db, api, { cfg, now: Date.now() + 1e6 });
+  assert.equal(idsOf(db.chans[keyOf('n1')]).length, 2);
+  assert.equal(idsOf(db.chans[keyOf('x1')]).length, 1);
+  const before = structuredClone(db);
+  const r = await run(db, api, { cfg, now: Date.now() + 2e6 });
+  assert.deepEqual(r.updates, {});
+  assert.deepEqual(db, before);
+});
+
+test('أقسام الفئة: قسم فئة حذفته من اللوحة (botIgnoreCats) لا يعود، والقناة تبقى في قسم دولتها', async () => {
+  dead = new Set(); const db = fresh();
+  db.botIgnoreCats.bot_sec_news = true;
+  const api = mkCatApi([['n1', 'N1', 'SA', ['news']]]);
+  await run(db, api, { cfg: catCfg() });
+  assert.ok(!secByName(db, 'قنوات أخبار'));
+  assert.equal(idsOf(db.chans[keyOf('n1')]).length, 1);
+});
+
+test('أقسام الفئة: قناة الفئة الميتة تُحذف كالمعتاد، وقسم الفئة لا يعدّ قسماً إضافياً يحميها', async () => {
+  dead = new Set(); const db = fresh();
+  const api = mkCatApi([['n1', 'N1', 'SA', ['news']], ['n2', 'N2', 'SA', ['news']]]);
+  const cfg = catCfg();
+  await run(db, api, { cfg });
+  dead = new Set(api.streams.filter(s => s.channel === 'n1').map(s => s.url));
+  await run(db, api, { cfg, now: 1e12 }); await run(db, api, { cfg, now: 2e12 });
+  assert.ok(!db.chans[keyOf('n1')], 'تُحذف بعد فشلين متتاليين');
+  assert.ok(db.chans[keyOf('n2')]);
+});
+
+test('أقسام الفئة: قسم أضفتَه يدوياً لقناة البوت يبقى محفوظاً (الأقسام الإضافية)', async () => {
+  dead = new Set(); const db = fresh();
+  const api = mkCatApi([['n1', 'N1', 'SA', ['news']]]);
+  const cfg = catCfg();
+  await run(db, api, { cfg });
+  db.chans[keyOf('n1')].categoryIds.push('mine'); db.chans[keyOf('n1')].categories.push('mine');
+  await run(db, api, { cfg, now: Date.now() + 1e6 });
+  assert.ok(idsOf(db.chans[keyOf('n1')]).includes('mine'));
+});
+
+test('تقرير الفئة: يعدّ حسب الدولة ويحسب الروابط الصالحة ولا يعرض روابط', () => {
+  const channels = [
+    { id: 'a', name: 'A', country: 'US', categories: ['xxx'] }, { id: 'b', name: 'B', country: 'US', categories: ['xxx'] },
+    { id: 'c', name: 'C', country: 'FR', categories: ['xxx'], closed: '2020-01-01' }, { id: 'd', name: 'D', country: 'FR', categories: ['news'] },
+    { id: 'e', name: 'E', country: 'DE', categories: [], is_nsfw: true }
+  ];
+  const streams = [{ channel: 'a', url: 'https://x/a.m3u8' }, { channel: 'b', url: 'http://x/b.m3u8' }, { channel: 'e', url: 'https://x/e.m3u8' }];
+  const r = summarizeCategory(channels, streams, 'xxx');
+  assert.equal(r.total, 3); assert.equal(r.playable, 2);
+  assert.deepEqual(r.byCountry.US, { total: 2, playable: 1 });
+  assert.ok(!JSON.stringify(r).includes('.m3u8'));
 });
