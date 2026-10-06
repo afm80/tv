@@ -1,0 +1,28 @@
+name: Sync channels
+on:
+  schedule:
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: 'تجربة فقط بدون كتابة'
+        type: boolean
+        default: true
+      only:
+        description: 'دول محددة مثل SA,EG (اختياري)'
+        required: false
+permissions:
+  contents: read
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --prefix bot --no-audit --no-fund
+      - run: node bot/sync.mjs ${{ (github.event_name == 'workflow_dispatch' && inputs.dry) && '--dry' || '' }} ${{ inputs.only && format('--only={0}', inputs.only) || '' }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
