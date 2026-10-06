@@ -230,16 +230,37 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignor
     });
   }
 
+  // ── أقسام حسب الفئة (أخبار، وثائقية، رياضة...): نفس القناة تُربط بقسم دولتها وبقسم فئتها دون تكرار السجل ──
+  // scope: all = كل الدول | arab = دول القسم العربي فقط | world = ما عداها. تُطابَق الأقسام الموجودة بالاسم، وتُنشأ الناقصة.
+  const arabSetAll = new Set(cfg.sections.arab.countries || ARAB);
+  const secDefs = [], secCreate = {};
+  (cfg.categorySections || []).forEach((def, i) => {
+    if (!def || def.enabled === false || !def.key || !(def.categories || []).length || !(def.names || []).length) return;
+    const id = findSection(def) || `bot_sec_${def.key}`;
+    if (ignoreCats.has(id)) return log.push(`⏭ تجاهل قسم ${def.names[0]}: حذفتَه من لوحة التحكم`);
+    if (!catList.some(c => c.id === id) && !secCreate[id]) secCreate[id] = { id, name: def.names[0], img: '', parentId: '', link: '', order: now + 1000 + i, source: 'bot' };
+    secDefs.push({ id, name: def.names[0], cats: new Set(def.categories), scope: def.scope || 'all' });
+  });
+  const secIdsFor = c => {
+    const isArab = arabSetAll.has(c.country), cs = c.categories || [];
+    return [...new Set(secDefs.filter(d => (d.scope === 'arab' ? isArab : d.scope === 'world' ? !isArab : true) && cs.some(x => d.cats.has(x))).map(d => d.id))];
+  };
+  const secIdSet = new Set(secDefs.map(d => d.id)), secUsed = {};
+
   // أقسام أنشأها البوت سابقاً بلا صورة: نضع العلم فقط (ولا نلمس أي صورة وضعتها أنت)
   for (const j of jobs) {
     const old = cats[j.catId] || Object.values(cats).find(v => v && v.id === j.catId);
     if (old && old.source === 'bot' && !old.img && flagUrl(j.code)) catFills[j.catId] = flagUrl(j.code);
   }
 
-  const botCats = new Set(jobs.map(j => j.catId));
+  const botCats = new Set([...jobs.map(j => j.catId), ...secIdSet]);
   // حفظ تدريجي: onCommit تُستدعى بعد المرحلة 1 ثم بعد كل دولة، فإذا انقطع التشغيل يبقى ما أُنجز
   const sectionCreates = Object.fromEntries(Object.entries(catCreates).filter(([id]) => !jobs.some(j => j.catId === id)));
-  const commit = async chunk => { if (onCommit) await onCommit({ catCreates: {}, catFills: {}, upserts: {}, deletes: {}, strikes: {}, ...chunk, botCats }); };
+  const commit = async chunk => {
+    const need = {};
+    for (const u of Object.values(chunk.upserts || {})) for (const id of (u.isNew ? u.data.categoryIds : u.catIds) || []) if (secCreate[id] && !secUsed[id]) { secUsed[id] = secCreate[id]; need[id] = secCreate[id]; }
+    if (onCommit) await onCommit({ catCreates: {}, catFills: {}, upserts: {}, deletes: {}, strikes: {}, ...chunk, catCreates: { ...(chunk.catCreates || {}), ...need }, botCats });
+  };
   const elig = groupEligible({ ...cfg, channels: api.channels, blocklist: api.blocklist, countries: jobs.map(j => j.code) });
   const eligByKey = new Map();
   for (const list of Object.values(elig)) for (const c of list) eligByKey.set(keyOf(c.id), c);
@@ -329,8 +350,9 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignor
     for (const x of r.fresh) { let lab = linkLabel(n++, x.quality); while (lab in links) lab = linkLabel(n++, x.quality); links[lab] = x.url; }
     if (r.dead.length || r.fresh.length) s.replaced++;
     s.kept++;
+    const secIds = c ? secIdsFor(c) : idsOf(v).filter(id => secIdSet.has(id));
     upserts[k] = {
-      isNew: false, catId: job.catId, links, basisSig,
+      isNew: false, catId: job.catId, catIds: [job.catId, ...secIds], links, basisSig,
       name: c ? (arName2(job, c) || c.name) : null,
       img: c ? pickLogo(c, logosBy.get(c.id)) : '',
       sourceId: v.sourceId || c?.id || '', country: job.code
@@ -377,7 +399,7 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignor
           isNew: true,
           data: {
             id: k, name: arName2(job, r.c) || r.c.name, img: pickLogo(r.c, logosBy.get(r.c.id)),
-            categoryIds: [job.catId], categories: [job.catId], links,
+            categoryIds: [job.catId, ...secIdsFor(r.c)], categories: [job.catId, ...secIdsFor(r.c)], links,
             order: now + (seq++), source: 'bot', sourceId: r.c.id, country: job.code, updatedAt: now
           }
         };
@@ -402,6 +424,11 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignor
     else delete catCreates[j.catId];
   }
 
+  Object.assign(catCreates, secUsed);
+  for (const d of secDefs) {
+    const n = Object.values(upserts).filter(u => ((u.isNew ? u.data.categoryIds : u.catIds) || []).includes(d.id)).length;
+    log.push(`${secCreate[d.id] && !catList.some(c => c.id === d.id) ? '＋ قسم جديد' : '▣ قسم'} ${d.name}: ${n} قناة`);
+  }
   return { catCreates, catFills, upserts, deletes, strikes, botCats, summary, log, empty };
 }
 
@@ -438,7 +465,7 @@ export function reconcile(plan, fresh, now = Date.now()) {
     if (sigOf(cur) !== u.basisSig) {                       // عدّلتها من اللوحة أثناء التشغيل: نحميها
       updates[`channels/${k}/manual`] = true; skip(k, 'عُدّلت أثناء التشغيل'); continue;
     }
-    const catIds = [u.catId, ...idsOf(cur).filter(id => !plan.botCats.has(id))];   // الأقسام الإضافية تبقى
+    const catIds = [...(u.catIds || [u.catId]), ...idsOf(cur).filter(id => !plan.botCats.has(id))];   // الأقسام الإضافية تبقى
     const patch = {}, set = (f, val) => { if (JSON.stringify(cur[f] ?? null) !== JSON.stringify(val)) patch[f] = val; };
     if (u.name) set('name', u.name);
     if (u.img) set('img', u.img);
@@ -467,4 +494,23 @@ export function reconcile(plan, fresh, now = Date.now()) {
     if ((cur.fails || 0) !== s.n) { updates[`channels/${k}/fails`] = s.n; stats.struck++; }
   }
   return { updates, stats, skipped };
+}
+
+// تقرير قراءة فقط عن فئة معينة في المصدر (لا يكتب شيئاً ولا يعرض روابط): العدد حسب الدولة وكم منها له رابط https
+export function summarizeCategory(channels, streams, category) {
+  const withStream = new Set();
+  for (const s of streams || []) if (s.channel && candidateStreams([s], 1).length) withStream.add(s.channel);
+  const byCountry = {}, list = [];
+  let total = 0, playable = 0;
+  for (const c of channels || []) {
+    const hit = (c.categories || []).includes(category) || (category === 'xxx' && c.is_nsfw);
+    if (!hit || c.closed || c.replaced_by) continue;
+    total++;
+    const ok = withStream.has(c.id); if (ok) playable++;
+    const code = c.country || '??';
+    const e = (byCountry[code] ||= { total: 0, playable: 0 });
+    e.total++; if (ok) e.playable++;
+    list.push({ name: c.name, country: code, playable: ok });
+  }
+  return { total, playable, byCountry, list };
 }
