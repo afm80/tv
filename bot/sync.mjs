@@ -6,7 +6,9 @@ const cfg = JSON.parse(fs.readFileSync(new URL('./config.json', import.meta.url)
 const DRY = process.argv.includes('--dry');
 const only = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7).split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
 const API = 'https://iptv-org.github.io/api/';
-const LOCK_TTL = 4 * 3600 * 1000;
+const LOCK_TTL = 30 * 60 * 1000;      // القفل ينتهي تلقائياً إن لم يتجدد 30 دقيقة
+const HEARTBEAT = 5 * 60 * 1000;      // التشغيل الحي يجدد القفل كل 5 دقائق
+const UNLOCK = process.argv.includes('--unlock');
 
 async function getJson(url, optional = false) {
   for (let i = 0; i < 3; i++) {
@@ -64,13 +66,39 @@ const onCommit = DRY ? null : async chunk => {
 
 // ── قفل: يمنع تشغيلين متزامنين (جدولة + يدوي أو تشغيل محلي) من التعارض ──
 const runId = `${process.env.GITHUB_RUN_ID || 'local'}-${Date.now()}`;
-let locked = false;
-if (db) {
-  const tx = await db.ref('botMeta/lock').transaction(cur => (cur && Date.now() - cur.at < LOCK_TTL ? undefined : { runId, at: Date.now() }));
-  if (!tx.committed) { console.log('تشغيل آخر للبوت قيد التنفيذ — تم الإيقاف دون تغيير.'); process.exit(0); }
-  locked = true;
+const lockRef = db && db.ref('botMeta/lock');
+let locked = false, beat = null;
+
+// تحرير يدوي للقفل العالق: node bot/sync.mjs --unlock
+if (UNLOCK) {
+  if (!db) throw new Error('--unlock يحتاج FIREBASE_SERVICE_ACCOUNT وبدون --dry');
+  await lockRef.remove();
+  console.log('تم تحرير القفل ✓');
+  process.exit(0);
 }
-const unlock = async () => { if (locked) { try { await db.ref('botMeta/lock').transaction(cur => (cur?.runId === runId ? null : undefined)); } catch {} } };
+
+if (db) {
+  const tx = await lockRef.transaction(cur => (cur && Date.now() - cur.at < LOCK_TTL ? undefined : { runId, at: Date.now() }));
+  if (!tx.committed) {
+    const cur = tx.snapshot.val();
+    console.log('تشغيل آخر للبوت قيد التنفيذ — تم الإيقاف دون تغيير.' + (cur ? ` (آخر نشاط للقفل قبل ${Math.round((Date.now() - cur.at) / 60000)} دقيقة)` : ''));
+    process.exit(0);
+  }
+  locked = true;
+  // نبضة: طالما التشغيل حيّ يبقى القفل صالحاً، وإذا مات التشغيل ينتهي القفل وحده
+  beat = setInterval(() => { lockRef.transaction(cur => (cur && cur.runId !== runId ? undefined : { runId, at: Date.now() })).catch(() => {}); }, HEARTBEAT);
+  beat.unref();
+}
+// ملاحظة: دالة المعاملة تُستدعى أول مرة بقيمة null قبل أن تصلها القيمة الحقيقية من الخادم،
+// لذلك لا نُرجع undefined عند null (كان ذلك يُلغي التحرير دائماً ويُبقي القفل عالقاً).
+const unlock = async () => {
+  clearInterval(beat);
+  if (!locked) return;
+  locked = false;
+  try { await lockRef.transaction(cur => (cur && cur.runId !== runId ? undefined : null)); } catch {}
+};
+// عند إلغاء التشغيل من GitHub تصل إشارة إيقاف: نحرر القفل قبل الخروج
+for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, async () => { await unlock(); process.exit(1); });
 
 try {
   const state = await readState();
