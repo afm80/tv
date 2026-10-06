@@ -7,14 +7,15 @@ const ALIASES = {
   MA: ['المغرب'], DZ: ['الجزائر'], TN: ['تونس'], OM: ['عمان', 'سلطنة عمان'], QA: ['قطر'],
   BH: ['البحرين'], SY: ['سوريا'], YE: ['اليمن'], SD: ['السودان'], PS: ['فلسطين'],
   MR: ['موريتانيا'], SO: ['الصومال'], DJ: ['جيبوتي'], KM: ['جزر القمر'],
-  US: ['أمريكا', 'الولايات المتحدة'], GB: ['بريطانيا', 'المملكة المتحدة'], DE: ['ألمانيا'],
+  US: ['أمريكا', 'الولايات المتحدة'], GB: ['بريطانيا', 'المملكة المتحدة'], UK: ['بريطانيا', 'المملكة المتحدة'], DE: ['ألمانيا'],
   FR: ['فرنسا'], ES: ['إسبانيا', 'اسبانيا'], IT: ['إيطاليا', 'ايطاليا'], TR: ['تركيا'], RU: ['روسيا'],
   IN: ['الهند'], BR: ['البرازيل'], CA: ['كندا'], AU: ['أستراليا', 'استراليا'], JP: ['اليابان'], KR: ['كوريا الجنوبية', 'كوريا']
 };
 
 let dn = null;
 try { dn = new Intl.DisplayNames(['ar'], { type: 'region' }); } catch {}
-export const arName = code => (dn && dn.of(code)) || code;
+const NAME_OVERRIDE = { UK: 'المملكة المتحدة' }; // iptv-org يستخدم UK بدل GB
+export const arName = code => NAME_OVERRIDE[code] || (() => { try { return dn && dn.of(code); } catch { return null; } })() || code;
 
 // توحيد النص العربي للمقارنة (يتجاهل التشكيل والهمزات والـ "ال" والرموز/الإيموجي)
 export const norm = s => String(s || '').toLowerCase()
@@ -192,4 +193,4 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], now =
     else deletes.push(...gone);
   }
   return { catCreates, writes, deletes, summary, log };
-                      }
+}
