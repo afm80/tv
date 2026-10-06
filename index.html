@@ -2229,7 +2229,7 @@ async function renderCurrentView() {
         roots.forEach(cat => {
             const card = document.createElement('div');
             card.className = 'card';
-            card.innerHTML = `<img src="${cat.img || DEFAULT_IMAGE}" onerror="this.src='${DEFAULT_IMAGE}'"><div class="card-title">${cat.name}</div>`;
+            card.innerHTML = `<img src="${escapeHtml(cat.img || DEFAULT_IMAGE)}" onerror="this.src='${DEFAULT_IMAGE}'"><div class="card-title">${escapeHtml(cat.name)}</div>`;
             card.onclick = () => {
                                 if (cat.link) { openExternalPage(cat.link); return; }
                 currentStack.push(cat.id); pushState(); renderCurrentView();
@@ -2245,7 +2245,7 @@ async function renderCurrentView() {
     subs.forEach(sub => {
         const card = document.createElement('div');
         card.className = 'card';
-        card.innerHTML = `<img src="${sub.img || DEFAULT_IMAGE}" onerror="this.src='${DEFAULT_IMAGE}'"><div class="card-title">${sub.name}</div>`;
+        card.innerHTML = `<img src="${escapeHtml(sub.img || DEFAULT_IMAGE)}" onerror="this.src='${DEFAULT_IMAGE}'"><div class="card-title">${escapeHtml(sub.name)}</div>`;
         card.onclick = () => {
                         if (sub.link) { openExternalPage(sub.link); return; }
             currentStack.push(sub.id); pushState(); renderCurrentView();
@@ -2261,7 +2261,7 @@ async function renderCurrentView() {
         if (!ch || !ch.id) return;
         const card = document.createElement('div');
         card.className = 'card';
-        card.innerHTML = `<img src="${ch.img || DEFAULT_IMAGE}" onerror="this.src='${DEFAULT_IMAGE}'"><div class="card-title">${ch.name}</div>`;
+        card.innerHTML = `<img src="${escapeHtml(ch.img || DEFAULT_IMAGE)}" onerror="this.src='${DEFAULT_IMAGE}'"><div class="card-title">${escapeHtml(ch.name)}</div>`;
         card.onclick = () => selectChannel(ch);
         grid.appendChild(card);
     });
@@ -2552,7 +2552,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=7', { updateViaCache: 'none' }).catch(err => console.warn('SW registration failed:', err));
+        navigator.serviceWorker.register('sw.js?v=8', { updateViaCache: 'none' }).catch(err => console.warn('SW registration failed:', err));
     }
 
     const homeNav = $('homeNav');
