@@ -47,7 +47,7 @@
     }
   },
   "countryAliases": {},
-  "maxChannelsPerCountry": 40,
+  "maxChannelsPerCountry": 0,
   "maxLinksPerChannel": 3,
   "excludeCategories": [
     "xxx"
@@ -64,7 +64,11 @@
   "checkLinks": true,
   "requireCors": true,
   "pruneMissing": true,
-  "maxChannelsWorld": 12,
+  "maxChannelsWorld": 50,
   "checkConcurrency": 50,
-  "checkTimeoutMs": 6000
+  "checkTimeoutMs": 8000,
+  "deleteAfterFailures": 2,
+  "checkRetries": 1,
+  "excludeCountries": [],
+  "createEmptyCountries": false
 }
