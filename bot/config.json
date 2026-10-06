@@ -81,7 +81,7 @@
       "categories": [
         "news"
       ],
-      "scope": "arab"
+      "scope": "all"
     },
     {
       "key": "documentary",
@@ -106,7 +106,7 @@
       "categories": [
         "religious"
       ],
-      "scope": "arab"
+      "scope": "all"
     },
     {
       "key": "cooking",
@@ -117,7 +117,7 @@
       "categories": [
         "cooking"
       ],
-      "scope": "arab"
+      "scope": "all"
     },
     {
       "key": "sports_arab",
@@ -193,7 +193,7 @@
         "auto",
         "general"
       ],
-      "scope": "arab"
+      "scope": "all"
     }
   ]
 }
