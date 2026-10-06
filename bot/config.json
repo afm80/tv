@@ -66,7 +66,9 @@
   "checkTimeoutMs": 8000,
   "deleteAfterFailures": 2,
   "checkRetries": 1,
-  "excludeCountries": [],
+  "excludeCountries": [
+    "IL"
+  ],
   "createEmptyCountries": false,
   "categorySections": [
     {
@@ -88,7 +90,10 @@
         "القنوات الوثائقية"
       ],
       "categories": [
-        "documentary"
+        "documentary",
+        "culture",
+        "education",
+        "science"
       ],
       "scope": "all"
     },
@@ -147,18 +152,6 @@
       "scope": "all"
     },
     {
-      "key": "entertainment",
-      "names": [
-        "قنوات ترفيهية",
-        "القنوات الترفيهية"
-      ],
-      "categories": [
-        "entertainment",
-        "comedy"
-      ],
-      "scope": "arab"
-    },
-    {
       "key": "movies",
       "names": [
         "قنوات أفلام",
@@ -169,17 +162,6 @@
         "classic"
       ],
       "scope": "all"
-    },
-    {
-      "key": "series",
-      "names": [
-        "قنوات مسلسلات",
-        "قنوات المسلسلات"
-      ],
-      "categories": [
-        "series"
-      ],
-      "scope": "arab"
     },
     {
       "key": "music",
@@ -193,102 +175,25 @@
       "scope": "all"
     },
     {
-      "key": "education",
+      "key": "variety",
       "names": [
-        "قنوات تعليمية",
-        "القنوات التعليمية"
-      ],
-      "categories": [
-        "education",
-        "science"
-      ],
-      "scope": "all"
-    },
-    {
-      "key": "lifestyle",
-      "names": [
-        "قنوات أسلوب الحياة والسفر"
+        "قنوات منوعة",
+        "القنوات المنوعة"
       ],
       "categories": [
         "lifestyle",
         "travel",
         "outdoor",
-        "relax"
-      ],
-      "scope": "all"
-    },
-    {
-      "key": "business",
-      "names": [
-        "قنوات الأعمال والاقتصاد"
-      ],
-      "categories": [
-        "business"
+        "relax",
+        "business",
+        "weather",
+        "shop",
+        "family",
+        "public",
+        "auto",
+        "general"
       ],
       "scope": "arab"
-    },
-    {
-      "key": "weather",
-      "names": [
-        "قنوات الطقس"
-      ],
-      "categories": [
-        "weather"
-      ],
-      "scope": "arab"
-    },
-    {
-      "key": "shop",
-      "names": [
-        "قنوات التسوق"
-      ],
-      "categories": [
-        "shop"
-      ],
-      "scope": "arab"
-    },
-    {
-      "key": "culture",
-      "names": [
-        "قنوات ثقافية",
-        "القنوات الثقافية"
-      ],
-      "categories": [
-        "culture"
-      ],
-      "scope": "arab"
-    },
-    {
-      "key": "family",
-      "names": [
-        "قنوات عائلية",
-        "القنوات العائلية"
-      ],
-      "categories": [
-        "family"
-      ],
-      "scope": "arab"
-    },
-    {
-      "key": "public",
-      "names": [
-        "قنوات حكومية وعامة",
-        "القنوات الحكومية"
-      ],
-      "categories": [
-        "public"
-      ],
-      "scope": "arab"
-    },
-    {
-      "key": "auto",
-      "names": [
-        "قنوات السيارات"
-      ],
-      "categories": [
-        "auto"
-      ],
-      "scope": "all"
     }
   ]
 }
