@@ -24,6 +24,9 @@ export const norm = s => String(s || '').toLowerCase()
   .replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
 const key = s => norm(s).split(' ').map(w => w.replace(/^ال/, '')).join(' ');
 
+// مفتاح مقارنة الأسماء (يتجاهل tv/hd/قناة والمسافات)
+export const nameKey = s => norm(s).split(' ').filter(w => !['tv', 'hd', 'channel', 'قناه'].includes(w)).join('');
+const idsOf = v => { const x = v?.categoryIds ?? v?.categories ?? []; return Array.isArray(x) ? x : Object.values(x); };
 export const keyOf = id => 'bot_' + String(id).replace(/[.$#\[\]\/]/g, '_');
 const cleanKey = s => String(s).replace(/[.$#\[\]\/]/g, '');
 
@@ -99,7 +102,7 @@ export async function checkStream(url, { timeoutMs = 8000, origin = '', requireC
   } catch { return false; } finally { clearTimeout(t); }
 }
 
-export async function buildPlan({ api, cats, chans, cfg, check, only = [], now = Date.now() }) {
+export async function buildPlan({ api, cats, chans, cfg, check, only = [], ignore = new Set(), now = Date.now() }) {
   const log = [], summary = {};
   const catList = Object.entries(cats || {}).map(([k, v]) => ({ id: v.id || k, name: v.name || '', parentId: String(v.parentId || v.parent || '') }));
   const top = catList.filter(c => !c.parentId);
@@ -148,13 +151,30 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], now =
   const logosBy = new Map();
   for (const l of api.logos || []) if (l.channel) (logosBy.get(l.channel) || logosBy.set(l.channel, []).get(l.channel)).push(l);
 
+  // فهرس القنوات اليدوية (وقنوات البوت المحمية) لتجنب التكرار
+  const manualIdx = { names: new Set(), urls: new Set() };
+  for (const v of Object.values(chans || {})) {
+    if (!v || (v.source === 'bot' && !v.manual)) continue;
+    const n = nameKey(v.name); if (n.length >= 3) manualIdx.names.add(n);
+    for (const u of Object.values(v.links || {})) manualIdx.urls.add(String(u));
+  }
+  const botCats = new Set(jobs.map(j => j.catId));
+
   const writes = {}, max = cfg.maxChannelsPerCountry, maxLinks = cfg.maxLinksPerChannel;
   let seq = 0;
   for (const job of jobs) {
-    const list = (elig[job.code] || [])
-      .map(c => ({ c, cands: candidateStreams(streamsBy.get(c.id) || [], maxLinks * 2) }))
-      .filter(x => x.cands.length)
-      .sort((a, b) => a.c.name.localeCompare(b.c.name));
+    const stats = { manual: 0, ignored: 0, dups: 0 }, list = [];
+    for (const c of elig[job.code] || []) {
+      const k = keyOf(c.id);
+      if (chans?.[k]?.manual) { stats.manual++; continue; }   // قناة معدلة/محمية
+      if (ignore.has(k)) { stats.ignored++; continue; }        // حذفتها من لوحة التحكم
+      const cands = candidateStreams(streamsBy.get(c.id) || [], maxLinks * 2);
+      if (!cands.length) continue;
+      const names = [c.name, ...(c.alt_names || [])].map(nameKey).filter(n => n.length >= 3);
+      if (names.some(n => manualIdx.names.has(n)) || cands.some(x => manualIdx.urls.has(x.url))) { stats.dups++; continue; } // موجودة يدوياً
+      list.push({ c, cands });
+    }
+    list.sort((a, b) => a.c.name.localeCompare(b.c.name));
     const kept = [];
     for (let i = 0; i < list.length && kept.length < max; i += 20) {
       const res = await Promise.all(list.slice(i, i + 20).map(async x => {
@@ -167,20 +187,20 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], now =
       }));
       for (const r of res) if (r && kept.length < max) kept.push(r);
     }
-    let skippedManual = 0;
     for (const { c, ok } of kept) {
       const k = keyOf(c.id), old = chans?.[k];
-      if (old?.manual) { skippedManual++; continue; }
       const ar = job.arabic && cfg.preferArabicNames ? (c.alt_names || []).find(n => /[\u0600-\u06FF]/.test(n)) : null;
       const links = {};
       ok.forEach((s, i) => { links[linkLabel(i, s.quality)] = s.url; });
+      const extras = idsOf(old).filter(id => !botCats.has(id)); // أقسام إضافية أضفتها أنت: تبقى
+      const catIds = [job.catId, ...extras];
       writes[k] = {
         id: k, name: ar || c.name, img: pickLogo(c, logosBy.get(c.id)),
-        categoryIds: [job.catId], categories: [job.catId], links,
+        categoryIds: catIds, categories: catIds, links,
         order: old?.order ?? now + (seq++), source: 'bot', sourceId: c.id, country: job.code, updatedAt: now
       };
     }
-    summary[job.code] = { name: arName(job.code), candidates: list.length, added: kept.length - skippedManual, skippedManual };
+    summary[job.code] = { name: arName(job.code), candidates: list.length, added: kept.length, ...stats };
   }
 
   // حذف قنوات البوت التي لم تعد صالحة (فقط للدول التي عالجناها)
@@ -188,7 +208,8 @@ export async function buildPlan({ api, cats, chans, cfg, check, only = [], now =
   const done = new Set(jobs.map(j => j.code));
   const oldBot = Object.entries(chans || {}).filter(([, v]) => v?.source === 'bot' && !v.manual && done.has(v.country));
   if (cfg.pruneMissing && !only.length) {
-    const gone = oldBot.filter(([k]) => !writes[k]).map(([k]) => k);
+    // لا نحذف قناة أضفت لها قسماً إضافياً
+    const gone = oldBot.filter(([k, v]) => !writes[k] && !idsOf(v).some(id => !botCats.has(id))).map(([k]) => k);
     if (oldBot.length >= 10 && Object.keys(writes).length < oldBot.length * 0.5) log.push('⚠ النتائج أقل من نصف القنوات الحالية — تم إلغاء الحذف احتياطاً (ربما المصدر معطل).');
     else deletes.push(...gone);
   }
