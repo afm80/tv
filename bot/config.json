@@ -4,24 +4,67 @@
   "sections": {
     "arab": {
       "id": "",
-      "names": ["قنوات عربية", "القنوات العربية"],
-      "countries": ["DZ","BH","KM","DJ","EG","IQ","JO","KW","LB","LY","MR","MA","OM","PS","QA","SA","SO","SD","SY","TN","AE","YE"]
+      "names": [
+        "قنوات عربية",
+        "القنوات العربية"
+      ],
+      "countries": [
+        "DZ",
+        "BH",
+        "KM",
+        "DJ",
+        "EG",
+        "IQ",
+        "JO",
+        "KW",
+        "LB",
+        "LY",
+        "MR",
+        "MA",
+        "OM",
+        "PS",
+        "QA",
+        "SA",
+        "SO",
+        "SD",
+        "SY",
+        "TN",
+        "AE",
+        "YE"
+      ],
+      "autoCreateCountries": true
     },
     "world": {
       "id": "",
-      "names": ["قنوات عالمية", "القنوات العالمية"],
+      "names": [
+        "قنوات عالمية",
+        "القنوات العالمية"
+      ],
       "autoCreateCountries": true,
-      "countries": ["US","UK","FR","DE","ES","IT","TR","RU","IN","BR","CA","AU","JP","KR"]
+      "countries": [
+        "*"
+      ]
     }
   },
   "countryAliases": {},
   "maxChannelsPerCountry": 40,
   "maxLinksPerChannel": 3,
-  "excludeCategories": ["xxx"],
+  "excludeCategories": [
+    "xxx"
+  ],
   "allowedCategories": [],
-  "blockNamePatterns": ["bein", "\\bssc\\b", "\\bosn\\b", "shahid", "starzplay"],
+  "blockNamePatterns": [
+    "bein",
+    "\\bssc\\b",
+    "\\bosn\\b",
+    "shahid",
+    "starzplay"
+  ],
   "preferArabicNames": true,
   "checkLinks": true,
   "requireCors": true,
-  "pruneMissing": true
+  "pruneMissing": true,
+  "maxChannelsWorld": 12,
+  "checkConcurrency": 50,
+  "checkTimeoutMs": 6000
 }
