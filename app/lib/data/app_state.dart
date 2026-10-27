@@ -11,7 +11,7 @@ import 'util.dart';
 /// (categoriesCache, channelsCache, currentStack, currentChannelId, ...).
 class AppState extends ChangeNotifier {
   // ----- البيانات -----
-  Map<String, Category> categories = {};
+  Map<String, ChannelCategory> categories = {};
   List<Channel> channels = [];
   Map<String, List<Channel>> _channelsByCategory = {};
   List<SidebarLink> sidebarLinks = [];
@@ -76,11 +76,11 @@ class AppState extends ChangeNotifier {
   }
 
   void _onCategories(dynamic value) {
-    final map = <String, Category>{};
+    final map = <String, ChannelCategory>{};
     for (final e in firebaseEntries(value)) {
       final v = e.value;
       if (v is Map) {
-        final c = Category.fromJson(e.key, v);
+        final c = ChannelCategory.fromJson(e.key, v);
         map[e.key] = c;
       }
     }
@@ -137,8 +137,8 @@ class AppState extends ChangeNotifier {
   String? get currentCategoryId => stack.isEmpty ? null : stack.last;
 
   /// الأقسام الفرعية للقسم [parentId] ('' = الجذر) مرتبة حسب order.
-  List<Category> childrenOf(String parentId) {
-    return stableSorted<Category>(
+  List<ChannelCategory> childrenOf(String parentId) {
+    return stableSorted<ChannelCategory>(
       categories.values.where((c) => c.parentId == parentId),
       (a, b) => a.order.compareTo(b.order),
     );

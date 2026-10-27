@@ -1,7 +1,7 @@
 import 'util.dart';
 
-class Category {
-  Category({
+class ChannelCategory {
+  ChannelCategory({
     required this.id,
     required this.name,
     required this.img,
@@ -18,8 +18,8 @@ class Category {
   final num order;
 
   /// يطابق: { id: key, ...value, parentId: String(value.parentId || value.parent || '') }
-  factory Category.fromJson(String key, Map value) {
-    return Category(
+  factory ChannelCategory.fromJson(String key, Map value) {
+    return ChannelCategory(
       id: jsStr(value.containsKey('id') ? value['id'] : key),
       name: jsStr(value['name']),
       img: jsStr(value['img']),
