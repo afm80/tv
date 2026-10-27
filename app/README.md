@@ -16,7 +16,7 @@
 ## البناء على جهازك
 ```bash
 cd app
-flutter create --platforms=android --org com.alfaham --project-name alfaham_tv --no-pub ../_scaffold
+flutter create --platforms=android --org app.alfaham --project-name tv --no-pub ../_scaffold
 cp -r ../_scaffold/android android && rm -rf ../_scaffold
 python3 tool/patch_android.py android
 mkdir -p ~/.android && cp tool/debug.keystore ~/.android/debug.keystore
@@ -46,4 +46,4 @@ flutter build apk --release        # الناتج: build/app/outputs/flutter-apk
 ## للنشر في Google Play لاحقاً
 الملف الحالي موقّع بمفتاح ثابت داخل المستودع (`tool/debug.keystore`) ومناسب للتثبيت المباشر فقط.
 للنشر في المتجر أنشئ مفتاحاً خاصاً وخزّنه في GitHub Secrets، ولا تستعمل هذا المفتاح.
-عدّل أيضاً `--org com.alfaham` إلى اسم الحزمة الذي تريده قبل أول نشر لأنه لا يتغير بعدها.
+اسم الحزمة الحالي `app.alfaham.tv` (من `--org app.alfaham --project-name tv`)؛ عدّله قبل أول نشر لأنه لا يتغير بعدها.
