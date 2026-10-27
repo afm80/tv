@@ -52,6 +52,16 @@ jobs:
         working-directory: app
         run: flutter pub get
 
+      - name: Patch plugins for the new Android Gradle Plugin
+        run: |
+          # نسخ AGP الحديثة ترفض proguard-android.txt (مثل flutter_inappwebview_android)؛
+          # نستبدله بالنسخة المحسّنة في كل مكتبات pub المحمّلة قبل البناء.
+          PUB="${PUB_CACHE:-$HOME/.pub-cache}/hosted/pub.dev"
+          grep -rl --include=build.gradle --include=build.gradle.kts "proguard-android.txt" "$PUB" 2>/dev/null | while read -r f; do
+            echo "patching $f"
+            sed -i "s/proguard-android\.txt/proguard-android-optimize.txt/g" "$f"
+          done || true
+
       - name: Run tests
         working-directory: app
         continue-on-error: true
