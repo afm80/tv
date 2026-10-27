@@ -548,7 +548,7 @@ body {
 #satUi{position:absolute;inset:0;z-index:7;direction:ltr;pointer-events:none;transition:opacity .3s ease;}
 #satUi>*{pointer-events:auto;}
 #satUi.idle{opacity:0;}
-#satUi.idle>*{pointer-events:none;}
+#satUi.idle>*,#satUi.idle .sat-center,#satUi.idle .sat-bottom,#satUi.idle .sat-top>*{pointer-events:none;}
 #satUi .sb{position:relative;width:48px;height:48px;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;font-size:21px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background .15s;}
 #satUi .sb:hover{background:rgba(255,255,255,.18);}
 #satUi .sb:focus-visible{outline:2px solid #ffc107;}
@@ -557,10 +557,10 @@ body {
 #satUi .sb:active{transform:scale(.9);}
 /* أعلى: إعادة تحميل (الرجوع من زر الجهاز) */
 #satUi .sat-top{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));display:flex;align-items:center;gap:6px;pointer-events:none;}
-#satUi .sat-top>*{pointer-events:inherit;}
+#satUi .sat-top>*{pointer-events:auto;}
 #satUi .sat-spacer{flex:1;}
 /* وسط: شريط الأزرار العائم */
-#satUi .sat-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:2px;pointer-events:inherit;}
+#satUi .sat-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:2px;pointer-events:auto;}
 #satUi .quality-menu{position:relative;display:inline-flex;}
 #satUi .quality-toggle{display:inline-flex !important;width:48px;height:48px;min-height:0;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;font-size:21px;align-items:center;justify-content:center;}
 #satUi .quality-toggle:hover{background:rgba(255,255,255,.18);color:#fff;}
@@ -568,7 +568,7 @@ body {
 #satUi .quality-options:empty::before{content:'لا توجد خيارات جودة';display:block;padding:7px 9px;color:#fff;font-size:13px;font-weight:700;white-space:nowrap;}
 #satUi .quality-options button.on{color:#ffc107;}
 /* أسفل: التقدم + كروت الروابط */
-#satUi .sat-bottom{position:absolute;left:0;right:0;bottom:0;padding:30px calc(12px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(0,0,0,.8),rgba(0,0,0,0));pointer-events:inherit;}
+#satUi .sat-bottom{position:absolute;left:0;right:0;bottom:0;padding:30px calc(12px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(0,0,0,.8),rgba(0,0,0,0));pointer-events:auto;}
 #satUi .sat-prog{display:flex;align-items:center;gap:8px;height:22px;margin-top:2px;color:#fff;font-size:12px;font-weight:700;}
 #satUi .sat-prog input[type=range]{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:3px;margin:0;border-radius:2px;outline:none;background:linear-gradient(to right,#e62117 var(--p,0%),rgba(255,255,255,.3) var(--p,0%));}
 #satUi .sat-prog input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:#e62117;border:0;}
@@ -780,7 +780,16 @@ body {
 @media (prefers-reduced-motion:reduce){#appSplash img{animation:none;opacity:1;transform:none;}}
 </style>
 <div id="appSplash" aria-hidden="true"><img src="./splash.png" alt="" onerror="this.onerror=null;this.src='./icon-512.png'"></div>
-<script>setTimeout(function(){var e=document.getElementById('appSplash');if(e)e.remove();},1800);</script>
+<script>
+(function(){
+  /* تظهر الافتتاحية مرة واحدة فقط لكل تشغيل (تبويب/نافذة التطبيق)، ولا تتكرر عند تحديث الصفحة */
+  var e=document.getElementById('appSplash'),seen=false;
+  try{seen=sessionStorage.getItem('splashShown')==='1';}catch(err){}
+  if(seen){if(e)e.remove();return;}
+  try{sessionStorage.setItem('splashShown','1');}catch(err){}
+  setTimeout(function(){var x=document.getElementById('appSplash');if(x)x.remove();},1800);
+})();
+</script>
     <script>
         // إزالة index.html من شريط العنوان (يبقى الرابط الأساسي من GitHub Pages فقط)
         if (/\/index\.html$/i.test(window.location.pathname)) {
@@ -846,10 +855,6 @@ body {
         <div class="sat-link-buttons" id="satLinkButtons" role="tablist" aria-label="روابط القناة"></div>
         <div class="sat-toast" id="satToast"></div>
         <div class="sat-ui" id="satUi">
-          <div class="sat-top">
-            <span class="sat-spacer"></span>
-            <button type="button" class="sb" id="satBtnReload" aria-label="إعادة تحميل"><i class="fa-solid fa-arrows-rotate"></i></button>
-          </div>
           <div class="sat-center" id="satRow">
             <button type="button" class="sb" id="satBtnBack" aria-label="رجوع 10 ثوانٍ"><i class="fa-solid fa-rotate-left"></i><b>10</b></button>
             <button type="button" class="sb" id="satBtnCast" aria-label="بث"><i class="fa-brands fa-chromecast"></i></button>
@@ -857,6 +862,7 @@ body {
             <button type="button" class="sb big" id="satBtnPlay" aria-label="تشغيل / إيقاف"><i class="fa-solid fa-pause"></i></button>
             <button type="button" class="sb" id="satBtnFs" aria-label="ملء الشاشة"><i class="fa-solid fa-maximize"></i></button>
             <button type="button" class="sb" id="satBtnPip" aria-label="نافذة عائمة"><i class="fa-regular fa-window-restore"></i></button>
+            <button type="button" class="sb" id="satBtnReload" aria-label="إعادة تحميل"><i class="fa-solid fa-arrows-rotate"></i></button>
             <button type="button" class="sb" id="satBtnFwd" aria-label="تقديم 10 ثوانٍ"><i class="fa-solid fa-rotate-right"></i><b>10</b></button>
           </div>
           <div class="sat-bottom">
