@@ -32,6 +32,9 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Install Pillow (launcher icons)
+        run: python3 -m pip install --break-system-packages pillow || python3 -m pip install pillow
+
       - name: Prepare Android project
         working-directory: app
         run: |
