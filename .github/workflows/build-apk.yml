@@ -37,7 +37,7 @@ jobs:
         run: |
           flutter --version
           # ننشئ هيكل أندرويد في مجلد مؤقت ثم ننسخه، فلا يمس ملفات التطبيق (lib / pubspec).
-          flutter create --platforms=android --org com.alfaham --project-name alfaham_tv --no-pub "$RUNNER_TEMP/scaffold"
+          flutter create --platforms=android --org app.alfaham --project-name tv --no-pub "$RUNNER_TEMP/scaffold"
           rm -rf android
           cp -r "$RUNNER_TEMP/scaffold/android" android
           python3 tool/patch_android.py android
