@@ -48,71 +48,8 @@ if perms or queries:
 m = re.sub(r'android:label="[^"]*"', f'android:label="{app_label}"', m, count=1)
 if "usesCleartextTraffic" not in m:
     m = m.replace("<application", '<application\n        android:usesCleartextTraffic="true"', 1)
-if "supportsPictureInPicture" not in m:
-    m = m.replace("<activity", '<activity\n            android:supportsPictureInPicture="true"', 1)
 write(manifest_path, m)
 print("patched AndroidManifest.xml")
-
-# ---------------------------------------------------------------- MainActivity (نافذة عائمة PiP)
-main_dir = os.path.join(android, "app", "src", "main")
-act_path = None
-for root, _dirs, files in os.walk(main_dir):
-    for f in files:
-        if f in ("MainActivity.kt", "MainActivity.java"):
-            act_path = os.path.join(root, f)
-if act_path:
-    pkg = re.search(r"^package\s+([\w.]+)", read(act_path), re.M).group(1)
-    if act_path.endswith(".java"):
-        os.remove(act_path)
-        act_path = act_path[:-5] + ".kt"
-    write(
-        act_path,
-        f"""package {pkg}
-
-import android.app.PictureInPictureParams
-import android.content.res.Configuration
-import android.os.Build
-import android.util.Rational
-import io.flutter.embedding.android.FlutterActivity
-import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugin.common.MethodChannel
-
-class MainActivity : FlutterActivity() {{
-    private var pipChannel: MethodChannel? = null
-
-    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {{
-        super.configureFlutterEngine(flutterEngine)
-        pipChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "alfaham/pip")
-        pipChannel!!.setMethodCallHandler {{ call, result ->
-            if (call.method == "enter") {{
-                if (Build.VERSION.SDK_INT >= 26) {{
-                    try {{
-                        enterPictureInPictureMode(
-                            PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()
-                        )
-                        result.success(true)
-                    }} catch (e: Exception) {{
-                        result.success(false)
-                    }}
-                }} else {{
-                    result.success(false)
-                }}
-            }} else {{
-                result.notImplemented()
-            }}
-        }}
-    }}
-
-    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {{
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        pipChannel?.invokeMethod("pipChanged", isInPictureInPictureMode)
-    }}
-}}
-""",
-    )
-    print("wrote MainActivity.kt with PiP channel")
-else:
-    print("WARNING: MainActivity not found, PiP skipped")
 
 # ---------------------------------------------------------------- أيقونة التطبيق
 # نولّدها وقت البناء من icon-1024.png الموجودة في المستودع (لا ملفات ثنائية مرفوعة).
@@ -165,6 +102,8 @@ write(
     "# media_kit يستدعي هذه الأصناف من الكود الأصلي (JNI) فلا يجوز حذفها أو تغيير أسمائها\n"
     "-keep class com.alexmercerind.** { *; }\n"
     "-keep class io.flutter.** { *; }\n"
+    "-keep class com.pichillilorenzo.** { *; }\n"
+    "-dontwarn com.pichillilorenzo.**\n"
     "-dontwarn com.google.android.play.core.**\n",
 )
 
