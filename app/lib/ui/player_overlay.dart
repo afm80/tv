@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -8,6 +7,7 @@ import 'package:video_player/video_player.dart' as vp;
 
 import '../data/models.dart';
 import '../player/player_controller.dart';
+import 'smart_image.dart';
 import 'theme.dart';
 
 const Color _kRed = Color(0xFFE62117);
@@ -726,10 +726,10 @@ class _ChannelBarState extends State<_ChannelBar> {
                 ),
                 child: ch.img.isEmpty
                     ? const SizedBox.shrink()
-                    : CachedNetworkImage(
-                        imageUrl: ch.img,
+                    : SmartImage(
+                        url: ch.img,
                         fit: BoxFit.contain,
-                        errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                        fallback: const SizedBox.shrink(),
                       ),
               ),
             ),

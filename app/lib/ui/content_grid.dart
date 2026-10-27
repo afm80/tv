@@ -1,12 +1,12 @@
 import 'dart:math';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../config.dart';
 import '../data/app_state.dart';
 import '../data/models.dart';
 import 'launch.dart';
+import 'smart_image.dart';
 import 'theme.dart';
 
 class _GridItem {
@@ -216,18 +216,7 @@ class _CardImage extends StatelessWidget {
   final String url;
 
   @override
-  Widget build(BuildContext context) {
-    final fallback = Image.asset(kDefaultImageAsset, fit: BoxFit.cover);
-    if (url.isEmpty) return fallback;
-    return CachedNetworkImage(
-      imageUrl: url,
-      fit: BoxFit.cover,
-      memCacheWidth: 300,
-      fadeInDuration: const Duration(milliseconds: 120),
-      placeholder: (_, __) => const SizedBox.expand(),
-      errorWidget: (_, __, ___) => fallback,
-    );
-  }
+  Widget build(BuildContext context) => SmartImage(url: url, memCacheWidth: 300);
 }
 
 class _MessagePill extends StatelessWidget {
