@@ -771,6 +771,16 @@ body {
     <meta name="apple-mobile-web-app-title" content="Alfaham TV" />
 </head>
 <body>
+<!-- شاشة بدء: أيقونة دائرية تنبثق مرة واحدة عند فتح الموقع ثم تتلاشى -->
+<style>
+#appSplash{position:fixed;inset:0;z-index:2147483000;background:#000;display:flex;align-items:center;justify-content:center;animation:splashFade .35s ease 1.4s forwards;}
+#appSplash img{width:148px;height:148px;border-radius:50%;object-fit:cover;box-shadow:0 0 36px 2px rgba(255,102,0,.35);opacity:0;transform:scale(.2);animation:splashPop .75s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes splashPop{0%{opacity:0;transform:scale(.2);}12%{opacity:1;}100%{opacity:1;transform:scale(1);}}
+@keyframes splashFade{to{opacity:0;visibility:hidden;}}
+@media (prefers-reduced-motion:reduce){#appSplash img{animation:none;opacity:1;transform:none;}}
+</style>
+<div id="appSplash" aria-hidden="true"><img src="./splash.png" alt="" onerror="this.onerror=null;this.src='./icon-512.png'"></div>
+<script>setTimeout(function(){var e=document.getElementById('appSplash');if(e)e.remove();},1800);</script>
     <script>
         // إزالة index.html من شريط العنوان (يبقى الرابط الأساسي من GitHub Pages فقط)
         if (/\/index\.html$/i.test(window.location.pathname)) {
