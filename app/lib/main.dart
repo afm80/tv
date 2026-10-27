@@ -6,6 +6,7 @@ import 'package:media_kit/media_kit.dart';
 import 'config.dart';
 import 'data/app_state.dart';
 import 'ui/home_shell.dart';
+import 'ui/launch.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +41,7 @@ class _AlfahamAppState extends State<AlfahamApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: kAppName,
+      navigatorKey: appNavKey,
       debugShowCheckedModeBanner: false,
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar')],
