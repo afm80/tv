@@ -13,6 +13,9 @@ const String kBackgroundUrl = 'https://h.top4top.io/p_3784nirj21.png';
 const String kLogoUrl =
     'https://raw.githubusercontent.com/h-80/img/refs/heads/main/Alfahamtv2.png';
 
+/// أصل الموقع: تُحلّ عليه الصور ذات المسار النسبي (مثل ./flags/iq.png) كما يفعل المتصفح.
+const String kSiteBase = 'https://afm80.github.io/';
+
 /// صور محلية تُستعمل عند فشل الصورة (DEFAULT_IMAGE في الموقع) أو عند عدم الاتصال.
 const String kDefaultImageAsset = 'assets/images/icon-192.png';
 const String kBrandImageAsset = 'assets/images/icon-1024.png';
