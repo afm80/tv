@@ -95,6 +95,35 @@ for root, _dirs, files in os.walk(res_dst):
             write(p, n)
             print("dark launch:", os.path.relpath(p, android))
 
+# ---------------------------------------------------------------- إخفاء شاشة البدء الأصلية (أندرويد 12+)
+# أندرويد 12 وما بعده يعرض تلقائياً أيقونة التطبيق في شاشة بدء النظام، ثم تظهر الأيقونة الدائرية من Flutter
+# فتظهر أيقونتان. نجعل أيقونة النظام شفافة وخلفيتها سوداء فتبقى الدائرية فقط.
+os.makedirs(os.path.join(res_dst, "drawable"), exist_ok=True)
+write(
+    os.path.join(res_dst, "drawable", "splash_transparent.xml"),
+    '<?xml version="1.0" encoding="utf-8"?>\n'
+    '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n'
+    '    <solid android:color="#00000000"/>\n'
+    '    <size android:width="1dp" android:height="1dp"/>\n'
+    "</shape>\n",
+)
+v31_styles = (
+    '<?xml version="1.0" encoding="utf-8"?>\n'
+    "<resources>\n"
+    '    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">\n'
+    '        <item name="android:windowBackground">@drawable/launch_background</item>\n'
+    '        <item name="android:windowSplashScreenBackground">#000000</item>\n'
+    '        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_transparent</item>\n'
+    '        <item name="android:windowSplashScreenIconBackgroundColor">#000000</item>\n'
+    '        <item name="android:windowSplashScreenAnimationDuration">0</item>\n'
+    "    </style>\n"
+    "</resources>\n"
+)
+for d in ("values-v31", "values-night-v31"):
+    os.makedirs(os.path.join(res_dst, d), exist_ok=True)
+    write(os.path.join(res_dst, d, "styles.xml"), v31_styles)
+print("hid Android 12+ system splash icon")
+
 # ---------------------------------------------------------------- proguard / gradle
 rules = os.path.join(android, "app", "proguard-rules.pro")
 write(
