@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -11,10 +12,14 @@ import 'theme.dart';
 
 const Color _kRed = Color(0xFFE62117);
 
-/// شاشة المشغل بتصميم ياسين تيفي: أفقية بملء الشاشة بلا أشرطة نظام.
+/// جسر أصلي (MainActivity.kt يولّده tool/patch_android.py): نافذة عائمة (PiP) وإعدادات البث.
+const MethodChannel _kNative = MethodChannel('app.alfaham/native');
+
+/// شاشة المشغل: أفقية بملء الشاشة بلا أشرطة نظام.
 /// ExoPlayer وMPV يتبدلان تلقائياً في الخلفية بلا أزرار لهما.
-/// أسفل الشاشة: ‎-10 ثوانٍ، تشغيل/إيقاف، ‎+10 ثوانٍ، إعادة تحميل، ⚙ الجودة (إن وُجدت)،
-/// حجم الصورة، نافذة عائمة (PiP)، ثم شريط التقدم الأحمر. أعلى اليسار: أزرار الروابط.
+/// أعلى اليسار: رجوع. أعلى اليمين: شعار/اسم القناة + إعادة تحميل.
+/// وسط الشاشة (شريط عائم): ‎-10، ⚙ الجودة، بث، حجم الصورة، تشغيل/إيقاف، ملء الشاشة، نافذة عائمة، ‎+10.
+/// أسفل الشاشة: شريط التقدم ثم كروت روابط القناة.
 /// كل ذلك يختفي بعد 3.5 ثانية (إذا كان البث يعمل) ويعود بلمس الشاشة.
 class PlayerOverlay extends StatefulWidget {
   const PlayerOverlay({super.key, required this.channel});
@@ -32,6 +37,9 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
   bool _uiVisible = true;
   bool _menuOpen = false;
   BoxFit _fit = BoxFit.contain;
+  bool _fullscreen = true;
+  String? _toast;
+  Timer? _toastTimer;
   double? _drag; // موضع السحب على شريط التقدم (ms)
 
   @override
@@ -66,6 +74,7 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _toastTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _exitFullscreen();
     _ctrl.dispose();
@@ -101,6 +110,60 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
         _ => BoxFit.contain,
       };
     });
+    _showToast(switch (_fit) {
+      BoxFit.cover => 'ملء الشاشة',
+      BoxFit.fill => 'تمديد',
+      _ => 'الحجم الأصلي',
+    });
+  }
+
+  void _showToast(String text) {
+    _toastTimer?.cancel();
+    setState(() => _toast = text);
+    _toastTimer = Timer(const Duration(milliseconds: 1400), () {
+      if (mounted) setState(() => _toast = null);
+    });
+  }
+
+  void _toggleFullscreen() {
+    setState(() => _fullscreen = !_fullscreen);
+    if (_fullscreen) {
+      _enterFullscreen();
+    } else {
+      SystemChrome.setPreferredOrientations(
+          [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+  }
+
+  Future<void> _enterPip() async {
+    setState(() => _uiVisible = false);
+    try {
+      await _kNative.invokeMethod('enterPip');
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _uiVisible = true);
+      _showToast('النافذة العائمة غير مدعومة على هذا الجهاز');
+    }
+  }
+
+  Future<void> _openCast() async {
+    try {
+      await _kNative.invokeMethod('openCast');
+    } catch (_) {
+      _showToast('البث غير متاح على هذا الجهاز');
+    }
+  }
+
+  Widget _fade(Widget child) {
+    return IgnorePointer(
+      ignoring: !_uiVisible,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: _uiVisible ? 1 : 0,
+        child: child,
+      ),
+    );
   }
 
   // ------------------------------------------------------------ البناء
@@ -117,38 +180,33 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
         child: ListenableBuilder(
           listenable: _ctrl,
           builder: (context, _) {
-            final hasLinks = _ctrl.links.length >= 2;
             return Stack(
               fit: StackFit.expand,
               children: [
                 _video(),
                 if (_ctrl.loading) _loader(),
                 if (_ctrl.failureVisible) _failure(),
-                if (hasLinks)
+                _bottomBar(pad),
+                _topBar(pad),
+                Positioned.fill(child: _fade(Center(child: _centerControls()))),
+                if (_toast != null)
                   Positioned(
-                    top: 10,
-                    left: 12 + pad.left,
-                    right: 12 + pad.right,
+                    top: 56,
+                    left: 0,
+                    right: 0,
                     child: IgnorePointer(
-                      ignoring: !_uiVisible,
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 300),
-                        opacity: _uiVisible ? 1 : 0,
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: _LinkBar(
-                            links: _ctrl.links,
-                            activeIndex: _ctrl.linkIndex,
-                            onSelect: (i) {
-                              _ctrl.selectLink(i);
-                              _wake();
-                            },
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color.fromRGBO(0, 0, 0, .7),
+                            borderRadius: BorderRadius.circular(20),
                           ),
+                          child: Text(_toast!, style: cairo(size: 13, weight: 700)),
                         ),
                       ),
                     ),
                   ),
-                _controlsBar(pad),
               ],
             );
           },
@@ -253,86 +311,124 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
     );
   }
 
-  // ------------------------------------------------------------ شريط التحكم السفلي (مثل ياسين تيفي)
+  // ------------------------------------------------------------ الشريط العلوي: رجوع + شعار القناة + إعادة تحميل
 
-  Widget _controlsBar(EdgeInsets pad) {
+  Widget _topBar(EdgeInsets pad) {
     return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: IgnorePointer(
-        ignoring: !_uiVisible,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 300),
-          opacity: _uiVisible ? 1 : 0,
-          child: Container(
-            padding: EdgeInsets.fromLTRB(12 + pad.left, 30, 12 + pad.right, 6 + pad.bottom),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Color.fromRGBO(0, 0, 0, .75), Color.fromRGBO(0, 0, 0, 0)],
-              ),
-            ),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buttonsRow(),
-                  _progress(),
-                ],
-              ),
-            ),
+      top: 8,
+      left: 8 + pad.left,
+      right: 8 + pad.right,
+      child: _fade(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Row(
+            children: [
+              _icon(Icons.arrow_back, () => Navigator.of(context).maybePop(), tip: 'رجوع', width: 48),
+              const Spacer(),
+              _logo(),
+              const SizedBox(width: 4),
+              _icon(Icons.refresh, _ctrl.reload, tip: 'إعادة تحميل', width: 48),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _icon(IconData icon, VoidCallback onTap, {String? tip}) {
+  Widget _logo() {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 220),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color.fromRGBO(0, 0, 0, .55),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.channel.img.isNotEmpty) ...[
+            CachedNetworkImage(
+              imageUrl: widget.channel.img,
+              width: 24,
+              height: 24,
+              fit: BoxFit.contain,
+              errorWidget: (_, __, ___) => const SizedBox.shrink(),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                widget.channel.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: cairo(size: 13, weight: 700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------ شريط الأزرار العائم في الوسط
+
+  Widget _icon(IconData icon, VoidCallback onTap, {String? tip, double width = 52, double size = 28}) {
     return SizedBox(
-      width: 60,
-      height: 44,
+      width: width,
+      height: 48,
       child: IconButton(
         padding: EdgeInsets.zero,
         tooltip: tip,
         onPressed: onTap,
-        icon: Icon(icon, color: Colors.white, size: 28),
+        icon: Icon(icon, color: Colors.white, size: size),
       ),
     );
   }
 
-  Widget _buttonsRow() {
-    final hasQuality = _ctrl.qualities.length >= 2;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _icon(Icons.replay_10, () => _ctrl.seekBy(const Duration(seconds: -10))),
-        ValueListenableBuilder<PlaybackInfo>(
-          valueListenable: _ctrl.info,
-          builder: (context, i, _) => _icon(
-            i.playing ? Icons.pause : Icons.play_arrow,
-            _ctrl.togglePlay,
+  Widget _centerControls() {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _icon(Icons.replay_10, () => _ctrl.seekBy(const Duration(seconds: -10)), tip: 'رجوع 10 ثوانٍ'),
+          _qualityMenu(),
+          _icon(Icons.cast, _openCast, tip: 'بث'),
+          _icon(Icons.aspect_ratio, _cycleFit, tip: 'حجم الصورة'),
+          ValueListenableBuilder<PlaybackInfo>(
+            valueListenable: _ctrl.info,
+            builder: (context, i, _) => _icon(
+              i.playing ? Icons.pause : Icons.play_arrow,
+              _ctrl.togglePlay,
+              tip: 'تشغيل / إيقاف',
+              size: 34,
+            ),
           ),
-        ),
-        _icon(Icons.forward_10, () => _ctrl.seekBy(const Duration(seconds: 10))),
-        const SizedBox(width: 24),
-        _icon(Icons.refresh, _ctrl.reload),
-        if (hasQuality) _qualityMenu(),
-        _icon(Icons.aspect_ratio, _cycleFit),
-      ],
+          _icon(
+            _fullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+            _toggleFullscreen,
+            tip: 'ملء الشاشة',
+            size: 30,
+          ),
+          _icon(Icons.picture_in_picture_alt, _enterPip, tip: 'نافذة عائمة'),
+          _icon(Icons.forward_10, () => _ctrl.seekBy(const Duration(seconds: 10)), tip: 'تقديم 10 ثوانٍ'),
+        ],
+      ),
     );
   }
 
   Widget _qualityMenu() {
+    final has = _ctrl.qualities.length >= 2;
     return SizedBox(
-      width: 60,
-      height: 44,
+      width: 52,
+      height: 48,
       child: PopupMenuButton<int>(
         padding: EdgeInsets.zero,
+        tooltip: 'الإعدادات',
         color: const Color.fromRGBO(0, 0, 0, .92),
-        position: PopupMenuPosition.over,
+        position: PopupMenuPosition.under,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         onOpened: () {
           _menuOpen = true;
@@ -347,17 +443,69 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
           _ctrl.selectQuality(i);
           _scheduleHide();
         },
-        itemBuilder: (context) => [
-          for (var i = 0; i < _ctrl.qualities.length; i++)
-            PopupMenuItem<int>(
-              value: i,
-              child: Text(
-                _ctrl.qualities[i].label,
-                style: cairo(size: 15, weight: 900, color: i == _ctrl.qualityIndex ? kAmber : Colors.white),
-              ),
-            ),
-        ],
+        itemBuilder: (context) => has
+            ? [
+                for (var i = 0; i < _ctrl.qualities.length; i++)
+                  PopupMenuItem<int>(
+                    value: i,
+                    child: Text(
+                      _ctrl.qualities[i].label,
+                      style: cairo(size: 15, weight: 900, color: i == _ctrl.qualityIndex ? kAmber : Colors.white),
+                    ),
+                  ),
+              ]
+            : [
+                PopupMenuItem<int>(
+                  enabled: false,
+                  value: -1,
+                  child: Text('لا توجد خيارات جودة', style: cairo(size: 14, weight: 700)),
+                ),
+              ],
         child: const Center(child: Icon(Icons.settings, color: Colors.white, size: 28)),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------ الشريط السفلي: التقدم + كروت الروابط
+
+  Widget _bottomBar(EdgeInsets pad) {
+    final hasLinks = _ctrl.links.length >= 2;
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: _fade(
+        Container(
+          padding: EdgeInsets.fromLTRB(12 + pad.left, 30, 12 + pad.right, 8 + pad.bottom),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: [Color.fromRGBO(0, 0, 0, .8), Color.fromRGBO(0, 0, 0, 0)],
+            ),
+          ),
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _progress(),
+                if (hasLinks) ...[
+                  const SizedBox(height: 8),
+                  _LinkBar(
+                    links: _ctrl.links,
+                    activeIndex: _ctrl.linkIndex,
+                    onSelect: (i) {
+                      _ctrl.selectLink(i);
+                      _wake();
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -422,7 +570,7 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
   }
 }
 
-/// شريط روابط القناة: أعلى اليسار، يتمرر أفقياً عند كثرة الروابط.
+/// كروت روابط القناة: أسفل الشاشة، تتمرر أفقياً عند كثرتها، والرابط الحالي بإطار مميّز.
 class _LinkBar extends StatelessWidget {
   const _LinkBar({required this.links, required this.activeIndex, required this.onSelect});
 
@@ -430,72 +578,60 @@ class _LinkBar extends StatelessWidget {
   final int activeIndex;
   final ValueChanged<int> onSelect;
 
-  static const double _fs = 13;
-
   String _labelOf(int i) => links[i].label.isNotEmpty ? links[i].label : 'رابط ${i + 1}';
-
-  double _contentWidth() {
-    var total = 20.0;
-    for (var i = 0; i < links.length; i++) {
-      final tp = TextPainter(
-        text: TextSpan(text: _labelOf(i), style: cairo(size: _fs, weight: 700)),
-        textDirection: TextDirection.rtl,
-        maxLines: 1,
-      )..layout();
-      total += tp.width + 28 + (i > 0 ? 6 : 0);
-    }
-    return total + 2;
-  }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : double.infinity;
-        final width = _contentWidth().clamp(0.0, maxW).toDouble();
-        return SizedBox(
-          width: width,
-          child: Directionality(
-            textDirection: TextDirection.ltr,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var i = 0; i < links.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 6),
-                    _chip(i),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+    return SizedBox(
+      height: 62,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: links.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) => _card(i),
+      ),
     );
   }
 
-  Widget _chip(int i) {
+  Widget _card(int i) {
     final active = i == activeIndex;
     return GestureDetector(
       onTap: () => onSelect(i),
       child: Container(
-        constraints: const BoxConstraints(minHeight: 32),
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        alignment: Alignment.center,
+        width: 88,
+        padding: const EdgeInsets.fromLTRB(5, 5, 5, 3),
         decoration: BoxDecoration(
-          color: active ? kAmber : const Color.fromRGBO(0, 0, 0, .55),
-          borderRadius: BorderRadius.circular(999),
-          border: active ? null : Border.all(color: const Color.fromRGBO(255, 255, 255, .3)),
+          color: active ? const Color.fromRGBO(255, 193, 7, .22) : const Color.fromRGBO(255, 255, 255, .12),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: active ? kAmber : Colors.transparent, width: 2),
         ),
-        child: Directionality(
-          textDirection: TextDirection.rtl,
-          child: Text(
-            _labelOf(i),
-            maxLines: 1,
-            style: cairo(size: _fs, weight: 700, color: active ? Colors.black : Colors.white),
-          ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: active ? kAmber : const Color.fromRGBO(255, 255, 255, .18),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  '${i + 1}',
+                  style: cairo(size: 15, weight: 900, color: active ? Colors.black : Colors.white),
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                _labelOf(i),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: cairo(size: 11, weight: 700),
+              ),
+            ),
+          ],
         ),
       ),
     );
