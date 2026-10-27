@@ -26,14 +26,11 @@ class PlayerOverlay extends StatefulWidget {
 
 class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserver {
   static const Duration _idle = Duration(milliseconds: 3500);
-  static const MethodChannel _pipChannel = MethodChannel('alfaham/pip');
 
   late final SatPlayerController _ctrl;
   Timer? _hideTimer;
   bool _uiVisible = true;
   bool _menuOpen = false;
-  bool _inPip = false;
-  DateTime _pipExitAt = DateTime.fromMillisecondsSinceEpoch(0);
   BoxFit _fit = BoxFit.contain;
   double? _drag; // موضع السحب على شريط التقدم (ms)
 
@@ -42,13 +39,6 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _enterFullscreen();
-    _pipChannel.setMethodCallHandler((call) async {
-      if (call.method == 'pipChanged') {
-        final on = call.arguments == true;
-        if (!on) _pipExitAt = DateTime.now();
-        if (mounted) setState(() => _inPip = on);
-      }
-    });
     _ctrl = SatPlayerController(channelName: widget.channel.name, links: widget.channel.links)..start();
     _scheduleHide();
   }
@@ -69,15 +59,13 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _enterFullscreen();
-      final backFromPip = _inPip || DateTime.now().difference(_pipExitAt) < const Duration(seconds: 2);
-      if (!backFromPip) _ctrl.onAppResumed();
+      _ctrl.onAppResumed();
     }
   }
 
   @override
   void dispose() {
     _hideTimer?.cancel();
-    _pipChannel.setMethodCallHandler(null);
     WidgetsBinding.instance.removeObserver(this);
     _exitFullscreen();
     _ctrl.dispose();
@@ -115,12 +103,6 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
     });
   }
 
-  Future<void> _enterPip() async {
-    try {
-      await _pipChannel.invokeMethod<bool>('enter');
-    } catch (_) {}
-  }
-
   // ------------------------------------------------------------ البناء
 
   @override
@@ -142,7 +124,7 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
                 _video(),
                 if (_ctrl.loading) _loader(),
                 if (_ctrl.failureVisible) _failure(),
-                if (!_inPip && hasLinks)
+                if (hasLinks)
                   Positioned(
                     top: 10,
                     left: 12 + pad.left,
@@ -166,7 +148,7 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
                       ),
                     ),
                   ),
-                if (!_inPip) _controlsBar(pad),
+                _controlsBar(pad),
               ],
             );
           },
@@ -339,7 +321,6 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
         _icon(Icons.refresh, _ctrl.reload),
         if (hasQuality) _qualityMenu(),
         _icon(Icons.aspect_ratio, _cycleFit),
-        _icon(Icons.picture_in_picture_alt, _enterPip),
       ],
     );
   }

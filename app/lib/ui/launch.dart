@@ -1,7 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// openExternalPage في الموقع: يفتح الرابط (في الموقع كان يستبدل الصفحة الحالية،
-/// وفي التطبيق نفتحه داخل متصفح مدمج ليعود المستخدم للتطبيق بزر الرجوع).
+import 'web_page.dart';
+
+/// مفتاح الملاح العام: يسمح بفتح صفحات من أي مكان دون الحاجة إلى context.
+final GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
+
+/// openExternalPage في الموقع.
+/// - inApp = true (الافتراضي): يفتح الرابط داخل التطبيق (أقسام الروابط، مباريات اليوم، نتائج البحث).
+/// - inApp = false: يفتح التطبيق الخارجي مباشرة (روابط التواصل في القائمة الجانبية).
 Future<void> openExternalPage(String url, {bool inApp = true}) async {
   Uri uri;
   try {
@@ -10,15 +17,16 @@ Future<void> openExternalPage(String url, {bool inApp = true}) async {
     return;
   }
   if (uri.scheme != 'http' && uri.scheme != 'https') return;
-  try {
-    final ok = await launchUrl(
-      uri,
-      mode: inApp ? LaunchMode.inAppBrowserView : LaunchMode.externalApplication,
-    );
-    if (!ok && inApp) await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } catch (_) {
-    try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {}
+
+  if (inApp) {
+    final nav = appNavKey.currentState;
+    if (nav != null) {
+      await nav.push(MaterialPageRoute<void>(builder: (_) => WebPage(url: uri.toString())));
+      return;
+    }
   }
+  try {
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok) await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+  } catch (_) {}
 }
