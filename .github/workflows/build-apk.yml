@@ -57,20 +57,28 @@ jobs:
         continue-on-error: true
         run: flutter test
 
-      - name: Build APK (universal)
+      - name: Build APK
         working-directory: app
-        run: flutter build apk --release
+        run: flutter build apk --release --target-platform android-arm,android-arm64
 
-      - name: Build APKs (per CPU, smaller)
-        working-directory: app
-        run: flutter build apk --release --split-per-abi
+      - name: Verify APK signature (fails the build if the file is not installable)
+        run: |
+          APK=app/build/app/outputs/flutter-apk/app-release.apk
+          ls -la "$APK"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" verify --verbose --print-certs "$APK"
 
-      - name: Collect files
+      - name: Show minimum Android version
+        continue-on-error: true
+        run: |
+          APK=app/build/app/outputs/flutter-apk/app-release.apk
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/aapt2" dump badging "$APK" | grep -E "^package:|sdkVersion|targetSdkVersion|native-code"
+
+      - name: Collect file
         run: |
           mkdir -p dist
           cp app/build/app/outputs/flutter-apk/app-release.apk dist/AlfahamTV.apk
-          cp app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/AlfahamTV-arm64-v8a.apk
-          cp app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/AlfahamTV-armeabi-v7a.apk
           ls -la dist
 
       - uses: actions/upload-artifact@v4
@@ -84,6 +92,5 @@ jobs:
           tag_name: apk-latest
           name: Alfaham TV (latest APK)
           body: |
-            أحدث نسخة من تطبيق أندرويد. حمّل `AlfahamTV.apk` وثبّته (يعمل على كل الأجهزة).
-            النسختان الأصغر: `arm64-v8a` لمعظم الهواتف الحديثة، و`armeabi-v7a` للهواتف القديمة.
+            أحدث نسخة من تطبيق أندرويد. حمّل ملف `AlfahamTV.apk` فقط وثبّته (يعمل على الهواتف 32 و64 بت).
           files: dist/*.apk
