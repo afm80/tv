@@ -39,7 +39,7 @@ class ContentGrid extends StatelessWidget {
     final currentId = state.currentCategoryId;
     final items = <_GridItem>[];
 
-    void addCategory(Category c) {
+    void addCategory(ChannelCategory c) {
       items.add(_GridItem(c.name, c.img, () {
         if (c.link.isNotEmpty) {
           openExternalPage(c.link);
