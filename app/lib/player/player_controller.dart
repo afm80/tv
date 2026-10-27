@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:video_player/video_player.dart' as vp;
 
 import '../config.dart';
 import '../data/models.dart';
@@ -12,9 +13,9 @@ import '../data/models.dart';
 /// المشغل الرئيسي / الاحتياطي (satKidsPlayerMode في الموقع).
 enum PlayerMode { primary, backup }
 
-/// اختيار المحرك (satEngineSelect). في الموقع محركات المتصفح (Video.js/HLS.js/...)،
-/// وفي التطبيق محركان على نفس مشغل MPV: تسريع الأجهزة أو فك برمجي.
-enum EngineChoice { auto, hw, sw }
+/// اختيار المحرك (satEngineSelect):
+/// ExoPlayer (مشغل جوجل، الرئيسي)، أو MPV بتسريع الأجهزة، أو MPV بفك برمجي (الاحتياطي).
+enum EngineChoice { auto, exo, mpvHw, mpvSw }
 
 class QualityLevel {
   const QualityLevel(this.label, this.url, this.bandwidth);
@@ -52,6 +53,10 @@ class SatPlayerController extends ChangeNotifier {
 
   int linkIndex = 0;
 
+  /// ExoPlayer (video_player) — المشغل الرئيسي.
+  vp.VideoPlayerController? exo;
+
+  /// MPV (media_kit) — المشغل الاحتياطي.
   Player? player;
   VideoController? video;
 
@@ -132,20 +137,36 @@ class SatPlayerController extends ChangeNotifier {
 
   /// عند العودة من الخلفية: نعيد فتح البث ليعود للحظة المباشرة.
   void onAppResumed() {
-    final p = player;
-    if (p == null || _currentPlayUrl.isEmpty || loading || _disposed) return;
-    unawaited(p.open(Media(_currentPlayUrl), play: true).catchError((_) {}));
+    if (_disposed || loading || activeUrl.isEmpty) return;
+    if (exo == null && player == null) return;
+    if (mode == PlayerMode.backup) {
+      playBackup(activeUrl);
+    } else {
+      playVideo(activeUrl, automatic: true);
+    }
   }
 
   Future<void> selectQuality(int index) async {
     if (index < 0 || index >= qualities.length) return;
     qualityIndex = index;
+    final levelUrl = qualities[index].url;
+    _notify();
+    final token = _token;
+    if (exo != null) {
+      final ok = await _attemptExo(levelUrl, token);
+      if (token != _token) return;
+      if (ok) {
+        _currentPlayUrl = levelUrl;
+      } else {
+        _showMsg('⚠ تعذر تشغيل هذه الجودة، جرّب جودة أخرى أو أعد المحاولة.');
+      }
+      return;
+    }
     final p = player;
     if (p == null) return;
-    _currentPlayUrl = qualities[index].url;
-    _notify();
+    _currentPlayUrl = levelUrl;
     try {
-      await p.open(Media(_currentPlayUrl), play: true);
+      await p.open(Media(levelUrl), play: true);
     } catch (_) {}
   }
 
@@ -159,10 +180,10 @@ class SatPlayerController extends ChangeNotifier {
     _setMode(PlayerMode.primary);
     _setLoading(true);
 
-    final all = [EngineChoice.hw, EngineChoice.sw];
-    final order = engine == EngineChoice.auto
-        ? all
-        : [engine, ...all.where((e) => e != engine)];
+    // الرئيسي: ExoPlayer. وإن اختار المستخدم محركاً آخر يُجرَّب أولاً ثم ExoPlayer.
+    final order = engine == EngineChoice.auto || engine == EngineChoice.exo
+        ? [EngineChoice.exo]
+        : [engine, EngineChoice.exo];
 
     for (final variant in buildUrlVariants(url)) {
       for (final e in order) {
@@ -200,16 +221,19 @@ class SatPlayerController extends ChangeNotifier {
     _setMode(PlayerMode.backup);
     _setLoading(true);
 
+    // الاحتياطي: MPV بتسريع الأجهزة ثم بالفك البرمجي.
     for (final variant in buildUrlVariants(url)) {
-      if (token != _token) return;
-      final ok = await _attempt(variant, EngineChoice.sw, token, backup: true);
-      if (token != _token) return;
-      if (ok) {
-        _currentPlayUrl = variant;
-        _setLoading(false);
-        failureVisible = false;
-        _notify();
-        return;
+      for (final e in const [EngineChoice.mpvHw, EngineChoice.mpvSw]) {
+        if (token != _token) return;
+        final ok = await _attempt(variant, e, token, backup: true);
+        if (token != _token) return;
+        if (ok) {
+          _currentPlayUrl = variant;
+          _setLoading(false);
+          failureVisible = false;
+          _notify();
+          return;
+        }
       }
     }
     if (token != _token) return;
@@ -237,6 +261,7 @@ class SatPlayerController extends ChangeNotifier {
 
   /// محاولة تشغيل واحدة (محرك + رابط). ترجع true إذا بدأ التشغيل فعلاً.
   Future<bool> _attempt(String url, EngineChoice choice, int token, {bool backup = false}) async {
+    if (choice == EngineChoice.exo) return _attemptExo(url, token);
     await _disposePlayer();
     if (token != _token) return false;
 
@@ -244,7 +269,7 @@ class SatPlayerController extends ChangeNotifier {
     final c = VideoController(
       p,
       configuration: VideoControllerConfiguration(
-        enableHardwareAcceleration: choice == EngineChoice.hw && !backup,
+        enableHardwareAcceleration: choice == EngineChoice.mpvHw,
       ),
     );
     if (token != _token) {
@@ -290,6 +315,78 @@ class SatPlayerController extends ChangeNotifier {
     return ok && token == _token;
   }
 
+  /// محاولة تشغيل بـ ExoPlayer. ترجع true إذا بدأ التشغيل فعلاً.
+  Future<bool> _attemptExo(String url, int token) async {
+    await _disposePlayer();
+    if (token != _token) return false;
+
+    Uri uri;
+    try {
+      uri = Uri.parse(url);
+    } catch (_) {
+      return false;
+    }
+    final c = vp.VideoPlayerController.networkUrl(
+      uri,
+      formatHint: url.toLowerCase().contains('.m3u8') ? vp.VideoFormat.hls : null,
+      httpHeaders: {'User-Agent': kUserAgent},
+      videoPlayerOptions: vp.VideoPlayerOptions(mixWithOthers: false),
+    );
+
+    final done = Completer<bool>();
+    void finish(bool ok) {
+      if (!done.isCompleted) done.complete(ok);
+    }
+
+    void listener() {
+      final v = c.value;
+      if (v.hasError) {
+        finish(false);
+      } else if (v.isInitialized &&
+          v.isPlaying &&
+          !v.isBuffering &&
+          v.position > const Duration(milliseconds: 300)) {
+        finish(true);
+      }
+    }
+
+    c.addListener(listener);
+    final timer = Timer(kEngineTimeout, () => finish(false));
+    var assigned = false;
+    try {
+      await c.initialize();
+      if (token == _token && !_disposed) {
+        exo = c;
+        assigned = true;
+        _notify();
+        await c.play();
+      } else {
+        finish(false);
+      }
+    } catch (_) {
+      finish(false);
+    }
+
+    final ok = await done.future;
+    timer.cancel();
+    try {
+      c.removeListener(listener);
+    } catch (_) {}
+
+    if (ok && token == _token) return true;
+
+    // فشل أو أُلغيت المحاولة: ننظف.
+    if (assigned && identical(exo, c)) {
+      exo = null;
+      _notify();
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+    }
+    try {
+      await c.dispose();
+    } catch (_) {}
+    return false;
+  }
+
   Future<void> _configure(Player p, {required bool backup}) async {
     final pf = p.platform;
     if (pf == null) return;
@@ -324,14 +421,19 @@ class SatPlayerController extends ChangeNotifier {
 
   Future<void> _disposePlayer() async {
     final p = player;
-    if (p == null) return;
+    final e = exo;
+    if (p == null && e == null) return;
     player = null;
     video = null;
+    exo = null;
     _notify();
     // نترك إطاراً واحداً على الأقل ليزول عنصر الفيديو من الشاشة قبل إتلاف المشغل.
     await Future<void>.delayed(const Duration(milliseconds: 80));
     try {
-      await p.dispose();
+      await p?.dispose();
+    } catch (_) {}
+    try {
+      await e?.dispose();
     } catch (_) {}
   }
 
@@ -419,10 +521,15 @@ class SatPlayerController extends ChangeNotifier {
     _disposed = true;
     _token++;
     final p = player;
+    final e = exo;
     player = null;
     video = null;
+    exo = null;
     if (p != null) {
       unawaited(p.dispose().catchError((_) {}));
+    }
+    if (e != null) {
+      unawaited(e.dispose().catchError((_) {}));
     }
     super.dispose();
   }
