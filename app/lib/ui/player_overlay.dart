@@ -5,6 +5,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import '../data/models.dart';
 import '../player/player_controller.dart';
+import 'exo_view.dart';
 import 'site_background.dart';
 import 'theme.dart';
 
@@ -109,7 +110,9 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
               fit: StackFit.expand,
               children: [
                 const ColoredBox(color: Colors.black),
-                if (video != null)
+                if (_ctrl.exo != null)
+                  ExoView(key: ObjectKey(_ctrl.exo), controller: _ctrl.exo!)
+                else if (video != null)
                   Video(
                     key: ObjectKey(video),
                     controller: video,
@@ -236,10 +239,11 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
           style: cairo(size: 15, weight: 900),
           items: [
             DropdownMenuItem(value: EngineChoice.auto, child: Text('تلقائي', style: cairo(size: 15, weight: 900))),
+            DropdownMenuItem(value: EngineChoice.exo, child: Text('ExoPlayer', style: cairo(size: 15, weight: 900))),
             DropdownMenuItem(
-                value: EngineChoice.hw, child: Text('المشغل الأصلي', style: cairo(size: 15, weight: 900))),
+                value: EngineChoice.mpvHw, child: Text('MPV (تسريع)', style: cairo(size: 15, weight: 900))),
             DropdownMenuItem(
-                value: EngineChoice.sw, child: Text('المشغل البرمجي', style: cairo(size: 15, weight: 900))),
+                value: EngineChoice.mpvSw, child: Text('MPV (برمجي)', style: cairo(size: 15, weight: 900))),
           ],
           onChanged: (v) {
             if (v != null) _ctrl.setEngine(v);
