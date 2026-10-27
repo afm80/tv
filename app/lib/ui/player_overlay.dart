@@ -17,8 +17,8 @@ const MethodChannel _kNative = MethodChannel('app.alfaham/native');
 
 /// شاشة المشغل: أفقية بملء الشاشة بلا أشرطة نظام.
 /// ExoPlayer وMPV يتبدلان تلقائياً في الخلفية بلا أزرار لهما.
-/// أعلى اليسار: أزرار روابط القناة (دوائر). أعلى اليمين: إعادة تحميل. الرجوع من زر الجهاز.
-/// وسط الشاشة (شريط عائم): ‎-10، ⚙ الجودة، بث، حجم الصورة، تشغيل/إيقاف، ملء الشاشة، نافذة عائمة، ‎+10.
+/// أعلى اليسار: أزرار روابط القناة (دوائر). الرجوع من زر الجهاز.
+/// وسط الشاشة (شريط عائم): ‎-10، ⚙ الجودة، بث، حجم الصورة، تشغيل/إيقاف، ملء الشاشة، نافذة عائمة، إعادة تحميل، ‎+10.
 /// أسفل الشاشة: شريط التقدم ثم كروت قنوات القسم (صورة + اسم القناة).
 /// كل ذلك يختفي بعد 3.5 ثانية (إذا كان البث يعمل) ويعود بلمس الشاشة.
 class PlayerOverlay extends StatefulWidget {
@@ -333,7 +333,7 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
     );
   }
 
-  // ------------------------------------------------------------ الشريط العلوي: روابط القناة + إعادة تحميل
+  // ------------------------------------------------------------ الشريط العلوي: روابط القناة
 
   Widget _topBar(EdgeInsets pad) {
     final hasLinks = _ctrl.links.length >= 2;
@@ -365,7 +365,6 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
                       )
                     : const SizedBox.shrink(),
               ),
-              _icon(Icons.refresh, _ctrl.reload, tip: 'إعادة تحميل', width: 48),
             ],
           ),
         ),
@@ -414,6 +413,7 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
             size: 30,
           ),
           _icon(Icons.picture_in_picture_alt, _enterPip, tip: 'نافذة عائمة'),
+          _icon(Icons.refresh, _ctrl.reload, tip: 'إعادة تحميل'),
           _icon(Icons.forward_10, () => _ctrl.seekBy(const Duration(seconds: 10)), tip: 'تقديم 10 ثوانٍ'),
         ],
       ),
@@ -705,6 +705,7 @@ class _ChannelBarState extends State<_ChannelBar> {
   Widget _card(Channel ch) {
     final active = ch.id == widget.activeId;
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () => widget.onSelect(ch),
       child: Container(
         width: _w,
