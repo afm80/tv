@@ -1,0 +1,41 @@
+name: alfaham_tv
+description: Alfaham TV - satellite channels streaming app (Flutter port of the web app).
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  http: ^1.2.0
+  cached_network_image: ^3.3.1
+  media_kit: ^1.1.11
+  media_kit_video: ^1.2.5
+  media_kit_libs_video: ^1.0.5
+  url_launcher: ^6.2.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo.ttf
+    - family: FABrands
+      fonts:
+        - asset: assets/fonts/fa-brands-400.ttf
+    - family: FASolid
+      fonts:
+        - asset: assets/fonts/fa-solid-900.ttf
+    - family: FARegular
+      fonts:
+        - asset: assets/fonts/fa-regular-400.ttf

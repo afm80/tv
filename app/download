@@ -1,0 +1,11 @@
+# يُولَّد تلقائياً (محلياً أو في GitHub Actions) ولا حاجة لرفعه
+android/
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.metadata
+pubspec.lock
+*.iml
+.idea/
