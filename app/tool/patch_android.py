@@ -124,3 +124,72 @@ for name, line in (
     else:
         print("WARNING: could not find release block in", name)
     break
+
+# ---------------------------------------------------------------- نافذة عائمة (PiP) وإعدادات البث
+# يستعملها زرا "نافذة عائمة" و"بث" في المشغل عبر القناة app.alfaham/native (lib/ui/player_overlay.dart).
+m = read(manifest_path)
+if "supportsPictureInPicture" not in m:
+    m = m.replace("<activity", '<activity\n            android:supportsPictureInPicture="true"', 1)
+    write(manifest_path, m)
+    print("patched AndroidManifest.xml (PiP)")
+
+kotlin_root = os.path.join(android, "app", "src", "main", "kotlin")
+main_activity = None
+for root, _dirs, files in os.walk(kotlin_root):
+    if "MainActivity.kt" in files:
+        main_activity = os.path.join(root, "MainActivity.kt")
+        break
+if main_activity:
+    pkg = re.search(r"^package\s+([\w.]+)", read(main_activity), re.M)
+    pkg_line = f"package {pkg.group(1)}\n\n" if pkg else ""
+    write(
+        main_activity,
+        pkg_line
+        + """import android.app.PictureInPictureParams
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import android.util.Rational
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+
+class MainActivity : FlutterActivity() {
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app.alfaham/native")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "enterPip" -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            try {
+                                val params = PictureInPictureParams.Builder()
+                                    .setAspectRatio(Rational(16, 9))
+                                    .build()
+                                enterPictureInPictureMode(params)
+                                result.success(true)
+                            } catch (e: Exception) {
+                                result.error("pip", e.message, null)
+                            }
+                        } else {
+                            result.error("pip", "unsupported", null)
+                        }
+                    }
+                    "openCast" -> {
+                        try {
+                            startActivity(Intent(Settings.ACTION_CAST_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("cast", e.message, null)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+}
+""",
+    )
+    print("wrote MainActivity.kt (PiP + cast settings)")
+else:
+    print("WARNING: MainActivity.kt not found; PiP/cast buttons will show a message")
