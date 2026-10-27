@@ -52,19 +52,34 @@ write(manifest_path, m)
 print("patched AndroidManifest.xml")
 
 # ---------------------------------------------------------------- أيقونة التطبيق
-res_src = os.path.join(here, "android_res")
+# نولّدها وقت البناء من icon-1024.png الموجودة في المستودع (لا ملفات ثنائية مرفوعة).
 res_dst = os.path.join(android, "app", "src", "main", "res")
-for d in sorted(os.listdir(res_src)):
-    src_dir = os.path.join(res_src, d)
-    dst_dir = os.path.join(res_dst, d)
-    os.makedirs(dst_dir, exist_ok=True)
-    for f in os.listdir(src_dir):
-        shutil.copy2(os.path.join(src_dir, f), os.path.join(dst_dir, f))
-# إن كان القالب يستعمل أيقونة تكيفية (anydpi-v26) فإنها تتقدم على الأيقونات أعلاه، نحذفها.
-for d in os.listdir(res_dst):
-    if d.startswith("mipmap-anydpi"):
-        shutil.rmtree(os.path.join(res_dst, d), ignore_errors=True)
-print("copied launcher icons")
+repo_root = os.path.abspath(os.path.join(here, "..", ".."))
+source_icon = None
+for cand in (
+    os.path.join(repo_root, "icon-1024.png"),
+    os.path.join(here, "..", "assets", "images", "icon-1024.png"),
+):
+    if os.path.exists(cand):
+        source_icon = cand
+        break
+try:
+    from PIL import Image
+
+    if source_icon is None:
+        raise RuntimeError("icon-1024.png not found")
+    img = Image.open(source_icon).convert("RGBA")
+    for d, size in (("mdpi", 48), ("hdpi", 72), ("xhdpi", 96), ("xxhdpi", 144), ("xxxhdpi", 192)):
+        out_dir = os.path.join(res_dst, "mipmap-" + d)
+        os.makedirs(out_dir, exist_ok=True)
+        img.resize((size, size), Image.LANCZOS).save(os.path.join(out_dir, "ic_launcher.png"), optimize=False)
+    # إن كان القالب يستعمل أيقونة تكيفية (anydpi-v26) فإنها تتقدم على الأيقونات أعلاه، نحذفها.
+    for d in os.listdir(res_dst):
+        if d.startswith("mipmap-anydpi"):
+            shutil.rmtree(os.path.join(res_dst, d), ignore_errors=True)
+    print("generated launcher icons from", source_icon)
+except Exception as e:  # الأيقونة ليست سبباً لفشل البناء: نترك أيقونة Flutter الافتراضية
+    print("WARNING: launcher icons skipped:", e)
 
 # ---------------------------------------------------------------- شاشة البدء سوداء
 for root, _dirs, files in os.walk(res_dst):
