@@ -7,6 +7,7 @@ import 'config.dart';
 import 'data/app_state.dart';
 import 'ui/home_shell.dart';
 import 'ui/launch.dart';
+import 'ui/splash_overlay.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,7 @@ class AlfahamApp extends StatefulWidget {
 
 class _AlfahamAppState extends State<AlfahamApp> {
   final AppState _state = AppState();
+  bool _showSplash = true; // مرة واحدة عند بدء التطبيق فقط
 
   @override
   void dispose() {
@@ -57,7 +59,13 @@ class _AlfahamAppState extends State<AlfahamApp> {
         useMaterial3: true,
         colorScheme: const ColorScheme.dark(primary: Color(0xFFFF6600), surface: Colors.black),
       ),
-      home: HomeShell(state: _state),
+      home: Stack(
+        fit: StackFit.expand,
+        children: [
+          HomeShell(state: _state),
+          if (_showSplash) SplashOverlay(onDone: () => setState(() => _showSplash = false)),
+        ],
+      ),
     );
   }
 }
