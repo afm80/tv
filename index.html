@@ -533,6 +533,39 @@ body {
 #satPlayer .link-chip.active{background:#ffc107;color:#000;text-shadow:none;}
 @media (max-width:600px){#satPlayer .sat-link-buttons{top:4px;left:0;max-width:100%;}#satPlayer .link-chip{min-height:30px;padding:0 12px;font-size:12px;}}
 
+/* ===== تصميم المشغل الجديد (مثل تطبيق الأندرويد): ملء الشاشة، أزرار سفلية، تختفي بعد 3.5 ثانية ===== */
+#playerContainer{background:#000;overflow:hidden;}
+#playerContainer #satPlayer{position:absolute;inset:0;max-width:none;margin:0;padding:0;}
+#playerContainer #satPlayer .video-wrap{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;border-radius:0;box-shadow:none;background:#000;}
+#satVideoWrap video{object-fit:var(--sat-fit,contain);}
+#satPlayer .player-controls,#satMsg{display:none !important;}
+#satVideoWrap video::-webkit-media-controls,#satVideoWrap video::-webkit-media-controls-enclosure,#satVideoWrap video::-webkit-media-controls-panel,#satVideoWrap video::-webkit-media-controls-start-playback-button{display:none !important;}
+#satVideoWrap .vjs-control-bar,#satVideoWrap .vjs-big-play-button,#satVideoWrap .vjs-loading-spinner,#satVideoWrap .dplayer-controller,#satVideoWrap .dplayer-controller-mask,#satVideoWrap .dplayer-mobile-play,#satVideoWrap .dplayer-notice,#satVideoWrap .dplayer-bezel,#satVideoWrap [data-media-control],#satVideoWrap .media-control{display:none !important;}
+#satPlayer .sat-link-buttons,#playerContainer #satPlayer .sat-link-buttons{top:calc(10px + env(safe-area-inset-top,0px));left:env(safe-area-inset-left,0px);}
+#satPlayer .link-chip{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.3);}
+#satPlayer .link-chip:hover{background:rgba(0,0,0,.7);}
+#satPlayer .link-chip.active{background:#ffc107;color:#000;border-color:#ffc107;}
+#satUi{position:absolute;left:0;right:0;bottom:0;z-index:7;direction:ltr;padding:30px calc(12px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(0,0,0,.78),rgba(0,0,0,0));transition:opacity .3s ease;}
+#satUi.idle{opacity:0;pointer-events:none;}
+#satUi .sat-row{display:flex;justify-content:center;align-items:center;gap:6px;}
+#satUi .sb{position:relative;width:56px;height:44px;padding:0;border:0;background:transparent;color:#fff;font-size:22px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+#satUi .sb b{position:absolute;left:50%;top:50%;transform:translate(-50%,-42%);font-size:8px;font-weight:700;pointer-events:none;}
+#satUi .sb:active{transform:scale(.9);}
+#satUi .sb-gap{width:22px;}
+#satUi .quality-menu{position:relative;display:inline-flex;}
+#satUi .quality-toggle{width:56px;height:44px;min-height:0;padding:0;border:0;border-radius:0;background:transparent;color:#fff;font-size:22px;align-items:center;justify-content:center;}
+#satUi .quality-toggle:hover{background:transparent;color:#fff;}
+#satUi .quality-options{bottom:calc(100% + 6px);right:50%;transform:translateX(50%);direction:rtl;}
+#satUi .quality-options button.on{color:#ffc107;}
+#satUi .sat-prog{display:flex;align-items:center;gap:8px;height:22px;margin-top:2px;color:#fff;font-size:12px;font-weight:700;}
+#satUi .sat-prog input[type=range]{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:3px;margin:0;border-radius:2px;outline:none;background:linear-gradient(to right,#e62117 var(--p,0%),rgba(255,255,255,.3) var(--p,0%));}
+#satUi .sat-prog input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:#e62117;border:0;}
+#satUi .sat-prog input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;background:#e62117;border:0;}
+#satUi .sat-live{display:none;flex:1;height:3px;border-radius:2px;background:#e62117;}
+#satUi .sat-prog.live input[type=range],#satUi .sat-prog.live #satTimeCur,#satUi .sat-prog.live #satTimeTot{display:none;}
+#satUi .sat-prog.live .sat-live{display:block;}
+
+
 .matches-table-container,
 .external-link-container {
     width: 100%;
@@ -770,10 +803,27 @@ body {
     <div class="player-container hidden" id="playerContainer">
     <div id="satPlayer">
       <div class="video-wrap" id="satVideoWrap">
-        <video id="satVideoEl" controls autoplay playsinline></video>
+        <video id="satVideoEl" autoplay playsinline></video>
         <div class="player-loader" id="satPlayerLoader"><div class="splash-spinner"></div><div>جاري تشغيل القناة...</div></div>
         <div class="player-failure" id="satPlayerFailure"><p>⚠ تعذر تشغيل القناة حالياً.</p><button type="button" id="satRetryLoaderBtn">إعادة المحاولة</button></div>
         <div class="sat-link-buttons" id="satLinkButtons" role="tablist" aria-label="روابط القناة"></div>
+        <div class="sat-ui" id="satUi">
+          <div class="sat-row" id="satRow">
+            <button type="button" class="sb" id="satBtnBack" aria-label="رجوع 10 ثوانٍ"><i class="fa-solid fa-rotate-left"></i><b>10</b></button>
+            <button type="button" class="sb" id="satBtnPlay" aria-label="تشغيل / إيقاف"><i class="fa-solid fa-pause"></i></button>
+            <button type="button" class="sb" id="satBtnFwd" aria-label="تقديم 10 ثوانٍ"><i class="fa-solid fa-rotate-right"></i><b>10</b></button>
+            <span class="sb-gap"></span>
+            <button type="button" class="sb" id="satBtnReload" aria-label="إعادة تحميل"><i class="fa-solid fa-arrows-rotate"></i></button>
+            <button type="button" class="sb" id="satBtnFit" aria-label="حجم الصورة"><i class="fa-solid fa-expand"></i></button>
+            <button type="button" class="sb" id="satBtnPip" aria-label="نافذة عائمة"><i class="fa-regular fa-window-restore"></i></button>
+          </div>
+          <div class="sat-prog" id="satProg">
+            <span id="satTimeCur">00:00</span>
+            <input type="range" id="satSeek" min="0" max="100" step="any" value="0" aria-label="شريط التقدم">
+            <span class="sat-live" id="satLive"></span>
+            <span id="satTimeTot">00:00</span>
+          </div>
+        </div>
       </div>
       <div class="player-controls">
         <button id="satPrimaryPlayerBtn" class="player-switch active" type="button">المشغل الرئيسي</button>
@@ -994,7 +1044,7 @@ satRetryKidsBtn.addEventListener('click',function(){satFallbackCycle=0;if(!satAc
 
 var satActiveEngine='native',satActiveUrl='',satActiveName='',satActiveImage='',satKidsPlayerMode='primary',satFallbackCycle=0,satActiveHls=null,satActiveShaka=null,satActiveVideoJs=null,satActiveDplayer=null,satActiveClappr=null,satEngineTimer=null,satEngineToken=0,satQualitySources=[],satQualityIndex=0;
 
-function satSetKidsPlayerMode(mode){satKidsPlayerMode=mode;var engineSelect=document.getElementById('satEngineSelect'),qualityMenu=document.querySelector('#satPlayer .quality-menu'),primaryButton=document.getElementById('satPrimaryPlayerBtn'),backupButton=document.getElementById('satBackupPlayerBtn');if(engineSelect)engineSelect.style.display=mode==='primary'?'':'none';if(qualityMenu)qualityMenu.style.display=mode==='primary'?'':'none';if(primaryButton)primaryButton.classList.toggle('active',mode==='primary');if(backupButton)backupButton.classList.toggle('active',mode==='backup');}
+function satSetKidsPlayerMode(mode){satKidsPlayerMode=mode;var engineSelect=document.getElementById('satEngineSelect'),qualityMenu=document.querySelector('#satPlayer .quality-menu'),primaryButton=document.getElementById('satPrimaryPlayerBtn'),backupButton=document.getElementById('satBackupPlayerBtn');if(engineSelect)engineSelect.style.display=mode==='primary'?'':'none';if(qualityMenu)qualityMenu.style.display='';if(primaryButton)primaryButton.classList.toggle('active',mode==='primary');if(backupButton)backupButton.classList.toggle('active',mode==='backup');}
 
 function satStopKidsMedia(){document.querySelectorAll('#satPlayer audio, #satPlayer video').forEach(function(media){try{media.pause();media.muted=true;media.volume=0;media.removeAttribute('src');media.load();}catch(e){}});document.querySelectorAll('#satVideoWrap iframe').forEach(function(frame){frame.remove();});}
 
@@ -1014,7 +1064,7 @@ function satResetPlayers(){
   try{satEnsureKidsVideo();}catch(e){}
   if(satVideoEl){
     satVideoEl.style.display='block';
-    satVideoEl.controls=true;
+    satVideoEl.controls=false;
   }
   satQualitySources=[];satQualityIndex=0;
   var satQualityToggle=document.getElementById('satQualityToggle');
@@ -1027,7 +1077,11 @@ function satResetPlayers(){
 
 function satQualityLabel(level,index){var name=level.name||(level.attrs&&level.attrs.NAME)||(level.attributes&&level.attributes.NAME);if(name)return String(name);if(level.height)return level.height+'p';if(level.bitrate)return Math.round(level.bitrate/1000)+'kbps';return 'جودة '+(index+1);}
 
-function satShowQualities(hls,token){var levels=hls.levels||[];if(token!==satEngineToken||levels.length<2)return;satQualitySources=levels.map(function(level,index){return {label:satQualityLabel(level,index),index:index};});var toggle=document.getElementById('satQualityToggle'),options=document.getElementById('satQualityOptions');toggle.style.display='inline-block';options.innerHTML='';satQualitySources.forEach(function(source,index){var button=document.createElement('button');button.type='button';button.textContent=source.label;button.onclick=function(){satQualityIndex=index;hls.currentLevel=source.index;options.classList.remove('open');};options.appendChild(button);});}
+function satSetQualities(labels,pick,token){var toggle=document.getElementById('satQualityToggle'),options=document.getElementById('satQualityOptions');if(token!==satEngineToken||labels.length<2||!toggle||!options)return;satQualitySources=labels;toggle.style.display='inline-flex';options.innerHTML='';labels.forEach(function(label,index){var button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=function(event){event.stopPropagation();satQualityIndex=index;try{pick(index);}catch(e){}options.classList.remove('open');options.querySelectorAll('button').forEach(function(b,k){b.classList.toggle('on',k===index);});};options.appendChild(button);});}
+function satShowQualities(hls,token){var levels=hls.levels||[];if(levels.length<2)return;satSetQualities(levels.map(function(level,index){return satQualityLabel(level,index);}),function(i){hls.currentLevel=i;},token);}
+function satVjsQualities(token){if(satQualitySources.length>=2)return;try{var vhs=satActiveVideoJs.tech({IWillNotUseThisInPlugins:true}).vhs;var reps=vhs&&vhs.representations?vhs.representations():[];if(reps.length<2)return;reps=reps.slice().sort(function(a,b){return (a.bandwidth||0)-(b.bandwidth||0);});satSetQualities(reps.map(function(r,i){return r.height?r.height+'p':(r.bandwidth?Math.round(r.bandwidth/1000)+'kbps':'جودة '+(i+1));}),function(i){reps.forEach(function(r,k){r.enabled(k===i);});},token);}catch(e){}}
+function satDplayerQualities(token){if(satQualitySources.length>=2)return;try{var h=satActiveDplayer&&satActiveDplayer.plugins&&satActiveDplayer.plugins.hls;if(h)satShowQualities(h,token);}catch(e){}}
+function satShakaQualities(){if(satQualitySources.length>=2)return;try{var seen={},tracks=[];satActiveShaka.getVariantTracks().forEach(function(tr){var key=tr.height||('b'+tr.bandwidth);if(!seen[key]||tr.bandwidth>seen[key].bandwidth)seen[key]=tr;});Object.keys(seen).forEach(function(k){tracks.push(seen[k]);});if(tracks.length<2)return;tracks.sort(function(a,b){return a.bandwidth-b.bandwidth;});satSetQualities(tracks.map(function(tr,i){return tr.height?tr.height+'p':(tr.bandwidth?Math.round(tr.bandwidth/1000)+'kbps':'جودة '+(i+1));}),function(i){satActiveShaka.configure({abr:{enabled:false}});satActiveShaka.selectVariantTrack(tracks[i],true);},satEngineToken);}catch(e){}}
 
 function satCreateHost(id){var host=document.createElement('div');host.id=id;host.dataset.playerHost='true';host.style.cssText='position:absolute;inset:0;width:100%;height:100%;background:#000;';satWrapEl.appendChild(host);return host;}
 
@@ -1047,13 +1101,13 @@ function satPlayWithEngine(url,engine,token,failed){
       try{satActiveHls=new Hls();satActiveHls.loadSource(url);satActiveHls.attachMedia(satVideoEl);satActiveHls.on(Hls.Events.MANIFEST_PARSED,function(){satShowQualities(satActiveHls,token);satVideoEl.play().catch(function(){});});satActiveHls.on(Hls.Events.FRAG_LOADED,function(){if(token===satEngineToken)satFinishKidsEngine(token);});satActiveHls.on(Hls.Events.ERROR,function(event,data){if(data&&data.fatal&&token===satEngineToken)failed();});return;}catch(e){if(token===satEngineToken)failed();return;}
     }
     if(engine==='videojs'&&window.videojs){
-      try{satActiveVideoJs=videojs(satVideoEl,{autoplay:true,controls:true,responsive:true,fluid:false});satActiveVideoJs.src({src:url,type:'application/x-mpegURL'});satActiveVideoJs.on('playing',function(){if(token===satEngineToken)satFinishKidsEngine(token);});satActiveVideoJs.on('error',function(){if(token===satEngineToken)failed();});satActiveVideoJs.play().catch(function(){});return;}catch(e){if(token===satEngineToken)failed();return;}
+      try{satActiveVideoJs=videojs(satVideoEl,{autoplay:true,controls:false,responsive:true,fluid:false});satActiveVideoJs.src({src:url,type:'application/x-mpegURL'});satActiveVideoJs.on('playing',function(){if(token===satEngineToken){satFinishKidsEngine(token);satVjsQualities(token);}});satActiveVideoJs.on('error',function(){if(token===satEngineToken)failed();});satActiveVideoJs.play().catch(function(){});return;}catch(e){if(token===satEngineToken)failed();return;}
     }
     if(engine==='shaka'&&window.shaka&&shaka.Player&&shaka.Player.isBrowserSupported()){
-      try{satActiveShaka=new shaka.Player(satVideoEl);satActiveShaka.load(url).then(function(){satVideoEl.play().then(function(){if(token===satEngineToken)satFinishKidsEngine(token);}).catch(function(){if(token===satEngineToken)failed();});}).catch(function(){if(token===satEngineToken)failed();});return;}catch(e){if(token===satEngineToken)failed();return;}
+      try{satActiveShaka=new shaka.Player(satVideoEl);satActiveShaka.load(url).then(function(){satShakaQualities();satVideoEl.play().then(function(){if(token===satEngineToken)satFinishKidsEngine(token);}).catch(function(){if(token===satEngineToken)failed();});}).catch(function(){if(token===satEngineToken)failed();});return;}catch(e){if(token===satEngineToken)failed();return;}
     }
     if(engine==='dplayer'&&window.DPlayer){
-      try{var dHost=satCreateHost('sat-dplayer-host');satActiveDplayer=new DPlayer({container:dHost,autoplay:true,video:{url:url,type:'hls'}});satActiveDplayer.on('playing',function(){if(token===satEngineToken)satFinishKidsEngine(token);});satActiveDplayer.on('error',function(){if(token===satEngineToken)failed();});return;}catch(e){if(token===satEngineToken)failed();return;}
+      try{var dHost=satCreateHost('sat-dplayer-host');satActiveDplayer=new DPlayer({container:dHost,autoplay:true,video:{url:url,type:'hls'}});satActiveDplayer.on('playing',function(){if(token===satEngineToken){satFinishKidsEngine(token);satDplayerQualities(token);}});satActiveDplayer.on('error',function(){if(token===satEngineToken)failed();});return;}catch(e){if(token===satEngineToken)failed();return;}
     }
     if(engine==='clappr'&&window.Clappr){
       try{var cHost=satCreateHost('sat-clappr-host');satActiveClappr=new Clappr.Player({source:url,parentId:'#'+cHost.id,autoPlay:true,mute:false});satActiveClappr.on(Clappr.Events.PLAYER_READY,function(){if(token===satEngineToken)satFinishKidsEngine(token);});satActiveClappr.on(Clappr.Events.PLAYER_ERROR,function(){if(token===satEngineToken)failed();});return;}catch(e){if(token===satEngineToken)failed();return;}
@@ -1121,7 +1175,7 @@ function satPlayBackupVideo(url,name,image){
     var u=variants[vIndex];
     if(!u){hidePlayerLoader('sat');showPlayerFailure('sat','⚠ المشغل الاحتياطي غير مدعوم في هذا المتصفح.',function(){satPlayBackupVideo(satActiveUrl,satActiveName,satActiveImage);});return;}
     if(!window.shaka||!shaka.Player.isBrowserSupported()){hidePlayerLoader('sat');showPlayerFailure('sat','⚠ المشغل الاحتياطي غير مدعوم في هذا المتصفح.',function(){satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);});return;}
-    try{satActiveShaka=new shaka.Player(satVideoEl);satActiveShaka.load(u).then(function(){hidePlayerLoader('sat');try{satPlayerFailure.classList.remove('show');}catch(e){}satVideoEl.play().catch(function(){});}).catch(function(){vIndex++;if(vIndex<variants.length){satActiveShaka=null;tryNext();}else{hidePlayerLoader('sat');showPlayerFailure('sat','⚠ فشل المشغل الاحتياطي، جاري الرجوع للمشغل الرئيسي...',function(){satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);});setTimeout(function(){if(satActiveUrl===url&&satKidsPlayerMode==='backup')satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);},1200);}});}catch(e){vIndex++;if(vIndex<variants.length)tryNext();else{hidePlayerLoader('sat');showPlayerFailure('sat','⚠ تعذر تشغيل المشغل الاحتياطي.',function(){satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);});}}
+    try{satActiveShaka=new shaka.Player(satVideoEl);satActiveShaka.load(u).then(function(){satShakaQualities();hidePlayerLoader('sat');try{satPlayerFailure.classList.remove('show');}catch(e){}satVideoEl.play().catch(function(){});}).catch(function(){vIndex++;if(vIndex<variants.length){satActiveShaka=null;tryNext();}else{hidePlayerLoader('sat');showPlayerFailure('sat','⚠ فشل المشغل الاحتياطي، جاري الرجوع للمشغل الرئيسي...',function(){satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);});setTimeout(function(){if(satActiveUrl===url&&satKidsPlayerMode==='backup')satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);},1200);}});}catch(e){vIndex++;if(vIndex<variants.length)tryNext();else{hidePlayerLoader('sat');showPlayerFailure('sat','⚠ تعذر تشغيل المشغل الاحتياطي.',function(){satPlayVideo(satActiveUrl,satActiveName,satActiveImage,true);});}}
   }
   tryNext();
 }
@@ -1142,7 +1196,7 @@ function satResetPlayersForEngine(){
 
 function satEnsureKidsVideo(){
   if(satWrapEl.contains(satVideoEl))return;
-  satVideoEl=document.createElement('video');satVideoEl.id='satVideoEl';satVideoEl.controls=true;satVideoEl.autoplay=true;satVideoEl.playsInline=true;
+  satVideoEl=document.createElement('video');satVideoEl.id='satVideoEl';satVideoEl.controls=false;satVideoEl.autoplay=true;satVideoEl.playsInline=true;
   satWrapEl.insertBefore(satVideoEl,satWrapEl.firstChild);
 }
 
@@ -1828,5 +1882,113 @@ function openMatchLink(url) {
     openExternalPage(url);
 }
     </script>
+
+<script>
+/* ===== واجهة المشغل الجديدة (مثل تطبيق الأندرويد) ===== */
+(function(){
+  var wrap=document.getElementById('satVideoWrap'),ui=document.getElementById('satUi'),pc=document.getElementById('playerContainer');
+  if(!wrap||!ui||!pc)return;
+  var $=function(id){return document.getElementById(id);};
+  var row=$('satRow'),prog=$('satProg'),seek=$('satSeek'),cur=$('satTimeCur'),tot=$('satTimeTot'),playBtn=$('satBtnPlay');
+  var IDLE=3500,timer=null,dragging=false;
+
+  /* نقل زر ⚙ الجودة إلى الصف السفلي */
+  var qm=document.querySelector('#satPlayer .quality-menu'),qt=$('satQualityToggle');
+  if(qm&&qt){qt.innerHTML='<i class="fa-solid fa-gear"></i>';row.insertBefore(qm,$('satBtnFit'));}
+
+  function media(){return wrap.querySelector('[data-player-host] video')||satVideoEl;}
+  function fmt(s){s=Math.max(0,Math.floor(s||0));var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;var p=function(n){return n<10?'0'+n:''+n;};return (h?h+':':'')+p(m)+':'+p(x);}
+
+  /* إظهار/إخفاء بعد 3.5 ثانية */
+  function hide(){
+    var m=media(),open=$('satQualityOptions')&&$('satQualityOptions').classList.contains('open');
+    if(open||(m&&m.paused&&!m.ended&&m.readyState>0)){timer=setTimeout(hide,IDLE);return;}
+    ui.classList.add('idle');
+  }
+  function wake(){ui.classList.remove('idle');clearTimeout(timer);timer=setTimeout(hide,IDLE);}
+  ['pointermove','pointerdown','touchstart','keydown','click'].forEach(function(ev){wrap.addEventListener(ev,wake,{passive:true});});
+
+  /* تقديم/تأخير */
+  function seekBy(sec){
+    var m=media();if(!m)return;
+    var t=(m.currentTime||0)+sec,lo=0,hi=m.duration;
+    if(m.seekable&&m.seekable.length){lo=m.seekable.start(0);hi=m.seekable.end(m.seekable.length-1);}
+    if(isFinite(hi))t=Math.min(t,hi);
+    t=Math.max(t,lo);
+    try{m.currentTime=t;}catch(e){}
+  }
+  $('satBtnBack').onclick=function(){seekBy(-10);};
+  $('satBtnFwd').onclick=function(){seekBy(10);};
+  playBtn.onclick=function(){var m=media();if(!m)return;if(m.paused){var r=m.play();if(r&&r.catch)r.catch(function(){});}else m.pause();update();};
+  $('satBtnReload').onclick=function(){
+    satFallbackCycle=0;if(!satActiveUrl)return;
+    if(satKidsPlayerMode==='backup')satPlayBackupVideo(satActiveUrl,satActiveName,satActiveImage);
+    else satPlayVideo(satActiveUrl,satActiveName,satActiveImage);
+  };
+
+  /* حجم الصورة: ملائم / ملء / تمديد */
+  var fits=['contain','cover','fill'],fitI=0;
+  $('satBtnFit').onclick=function(){fitI=(fitI+1)%fits.length;wrap.style.setProperty('--sat-fit',fits[fitI]);};
+
+  /* نافذة عائمة */
+  var pipBtn=$('satBtnPip');
+  if(!(document.pictureInPictureEnabled||document.createElement('video').webkitSetPresentationMode))pipBtn.style.display='none';
+  pipBtn.onclick=function(){
+    var m=media();
+    try{
+      if(document.pictureInPictureElement)document.exitPictureInPicture();
+      else if(m.requestPictureInPicture)m.requestPictureInPicture();
+      else if(m.webkitSetPresentationMode)m.webkitSetPresentationMode(m.webkitPresentationMode==='picture-in-picture'?'inline':'picture-in-picture');
+    }catch(e){}
+  };
+
+  /* شريط التقدم */
+  function paint(v,max){seek.style.setProperty('--p',(max>0?Math.min(100,v/max*100):0)+'%');}
+  seek.addEventListener('input',function(){dragging=true;paint(+seek.value,+seek.max);cur.textContent=fmt(+seek.value);});
+  seek.addEventListener('change',function(){var m=media();if(m)try{m.currentTime=+seek.value;}catch(e){}dragging=false;});
+  function update(){
+    var m=media();if(!m)return;
+    var icon=playBtn.firstChild;if(icon)icon.className='fa-solid '+(m.paused?'fa-play':'fa-pause');
+    var d=m.duration,vod=isFinite(d)&&d>0;
+    prog.classList.toggle('live',!vod);
+    if(vod&&!dragging){seek.max=d;seek.value=m.currentTime||0;paint(m.currentTime||0,d);cur.textContent=fmt(m.currentTime);tot.textContent=fmt(d);}
+  }
+  setInterval(function(){if(!pc.classList.contains('hidden'))update();},500);
+
+  /* ملء الشاشة + الاتجاه الأفقي (على الجوال) وإنهاؤهما عند إغلاق المشغل */
+  var touch=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+  function lock(){try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(function(){});}catch(e){}}
+  function enter(){
+    if(!touch)return;
+    try{
+      var req=pc.requestFullscreen||pc.webkitRequestFullscreen;
+      if(req&&!document.fullscreenElement&&!document.webkitFullscreenElement){
+        var r=req.call(pc,{navigationUI:'hide'});
+        if(r&&r.then)r.then(lock).catch(function(){});else lock();
+      }else lock();
+    }catch(e){}
+  }
+  function leave(){
+    try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
+    try{
+      if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(function(){});
+      else if(document.webkitFullscreenElement&&document.webkitExitFullscreen)document.webkitExitFullscreen();
+    }catch(e){}
+  }
+  var wasHidden=pc.classList.contains('hidden');
+  new MutationObserver(function(){
+    var h=pc.classList.contains('hidden');
+    if(h===wasHidden)return;
+    wasHidden=h;
+    if(h)leave();else{enter();wake();}
+  }).observe(pc,{attributes:true,attributeFilter:['class']});
+
+  /* على الحاسوب: نقرتان تبدّلان ملء الشاشة */
+  wrap.addEventListener('dblclick',function(){
+    if(touch)return;
+    try{if(document.fullscreenElement)document.exitFullscreen();else pc.requestFullscreen();}catch(e){}
+  });
+})();
+</script>
 </body>
 </html>
