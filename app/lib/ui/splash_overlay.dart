@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// صورة الأيقونة المنبثقة (للبدء فقط، منفصلة عن أيقونة التطبيق): ضع ملفك هنا بهذا الاسم.
-const String _kSplashImage = 'assets/images/splash.png';
-const String _kFallbackImage = 'assets/images/icon-512.png';
+/// أيقونة التطبيق فقط (لا توجد صورة بدء مخصصة).
+const String _kIconImage = 'assets/images/icon-512.png';
 
 /// شاشة بدء قصيرة: أيقونة دائرية تنبثق (تكبر بحركة ارتدادية) ثم تتلاشى الشاشة كلها.
 /// تظهر مرة واحدة فقط عند تشغيل التطبيق (تُنشأ في main.dart ولا تعود حتى يُعاد تشغيله).
@@ -77,12 +76,7 @@ class _SplashOverlayState extends State<SplashOverlay> with SingleTickerProvider
                       ],
                     ),
                     child: ClipOval(
-                      child: Image.asset(
-                        _kSplashImage,
-                        fit: BoxFit.cover,
-                        // إن لم توجد صورة البدء بعد، نستعمل أيقونة التطبيق.
-                        errorBuilder: (_, __, ___) => Image.asset(_kFallbackImage, fit: BoxFit.cover),
-                      ),
+                      child: Image.asset(_kIconImage, fit: BoxFit.cover),
                     ),
                   ),
                 ),
