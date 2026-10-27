@@ -158,7 +158,9 @@ class SatPlayerController extends ChangeNotifier {
       if (ok) {
         _currentPlayUrl = levelUrl;
       } else {
-        _showMsg('⚠ تعذر تشغيل هذه الجودة، جرّب جودة أخرى أو أعد المحاولة.');
+        _showFailure('⚠ تعذر تشغيل هذه الجودة.', () {
+          playVideo(activeUrl, automatic: true);
+        });
       }
       return;
     }
@@ -232,17 +234,16 @@ class SatPlayerController extends ChangeNotifier {
           _setLoading(false);
           failureVisible = false;
           _notify();
+          unawaited(_loadLevels(variant, token));
           return;
         }
       }
     }
     if (token != _token) return;
-    _setLoading(false);
-    _showFailure('⚠ فشل المشغل الاحتياطي، جاري الرجوع للمشغل الرئيسي...', () {
-      playVideo(activeUrl, automatic: true);
-    });
-    Timer(const Duration(milliseconds: 1200), () {
-      if (!_disposed && activeUrl == url && mode == PlayerMode.backup) {
+    // رجوع صامت للمشغل الرئيسي (بدون رسائل). المؤشر يبقى ظاهراً أثناء الانتقال.
+    _setLoading(true);
+    Timer(const Duration(milliseconds: 300), () {
+      if (!_disposed && token == _token && activeUrl == url && mode == PlayerMode.backup) {
         playVideo(activeUrl, automatic: true);
       }
     });
@@ -465,7 +466,6 @@ class SatPlayerController extends ChangeNotifier {
   // ---------------------------------------------------------------- قائمة الجودة (HLS)
 
   Future<void> _loadLevels(String url, int token) async {
-    if (mode != PlayerMode.primary) return;
     try {
       final res = await http
           .get(Uri.parse(url), headers: {'User-Agent': kUserAgent})
