@@ -17,6 +17,27 @@ enum PlayerMode { primary, backup }
 /// ExoPlayer (مشغل جوجل، الرئيسي)، أو MPV بتسريع الأجهزة، أو MPV بفك برمجي (الاحتياطي).
 enum EngineChoice { auto, exo, mpvHw, mpvSw }
 
+/// حالة التشغيل الحالية (للتحكم وشريط التقدم) بغض النظر عن المحرك.
+class PlaybackInfo {
+  const PlaybackInfo({this.playing = false, this.position = Duration.zero, this.duration = Duration.zero});
+  final bool playing;
+  final Duration position;
+  final Duration duration;
+
+  /// بث مباشر: بلا مدة معروفة.
+  bool get live => duration.inSeconds <= 0;
+
+  @override
+  bool operator ==(Object other) =>
+      other is PlaybackInfo &&
+      other.playing == playing &&
+      other.position.inSeconds == position.inSeconds &&
+      other.duration.inSeconds == duration.inSeconds;
+
+  @override
+  int get hashCode => Object.hash(playing, position.inSeconds, duration.inSeconds);
+}
+
 class QualityLevel {
   const QualityLevel(this.label, this.url, this.bandwidth);
   final String label;
@@ -74,6 +95,10 @@ class SatPlayerController extends ChangeNotifier {
   List<QualityLevel> qualities = [];
   int qualityIndex = 0;
 
+  /// حالة التشغيل (تُحدَّث كل نصف ثانية).
+  final ValueNotifier<PlaybackInfo> info = ValueNotifier(const PlaybackInfo());
+  Timer? _poll;
+
   String activeUrl = '';
   String _currentPlayUrl = '';
   int fallbackCycle = 0;
@@ -88,7 +113,87 @@ class SatPlayerController extends ChangeNotifier {
 
   void start() {
     if (links.isEmpty) return;
+    _poll ??= Timer.periodic(const Duration(milliseconds: 500), (_) => _pollInfo());
     playVideo(links[0].url);
+  }
+
+  void _pollInfo() {
+    if (_disposed) return;
+    PlaybackInfo n = const PlaybackInfo();
+    try {
+      final e = exo;
+      final p = player;
+      if (e != null) {
+        final v = e.value;
+        n = PlaybackInfo(playing: v.isPlaying, position: v.position, duration: v.duration);
+      } else if (p != null) {
+        final s = p.state;
+        n = PlaybackInfo(playing: s.playing, position: s.position, duration: s.duration);
+      }
+    } catch (_) {}
+    if (n != info.value) info.value = n;
+  }
+
+  /// تشغيل / إيقاف مؤقت.
+  Future<void> togglePlay() async {
+    try {
+      final e = exo;
+      if (e != null) {
+        if (e.value.isPlaying) {
+          await e.pause();
+        } else {
+          await e.play();
+        }
+      } else {
+        await player?.playOrPause();
+      }
+    } catch (_) {}
+    _pollInfo();
+  }
+
+  /// تقديم/تأخير (مثلاً ±10 ثوانٍ).
+  Future<void> seekBy(Duration delta) async {
+    try {
+      final e = exo;
+      if (e != null) {
+        await e.seekTo(_clamp(e.value.position + delta, e.value.duration));
+      } else {
+        final p = player;
+        if (p != null) await p.seek(_clamp(p.state.position + delta, p.state.duration));
+      }
+    } catch (_) {}
+    _pollInfo();
+  }
+
+  /// الانتقال لموضع محدد (شريط التقدم).
+  Future<void> seekTo(Duration to) async {
+    try {
+      final e = exo;
+      if (e != null) {
+        await e.seekTo(_clamp(to, e.value.duration));
+      } else {
+        final p = player;
+        if (p != null) await p.seek(_clamp(to, p.state.duration));
+      }
+    } catch (_) {}
+    _pollInfo();
+  }
+
+  Duration _clamp(Duration t, Duration total) {
+    if (t < Duration.zero) return Duration.zero;
+    if (total > Duration.zero && t > total) return total;
+    return t;
+  }
+
+  /// زر إعادة التحميل (يعيد فتح البث الحالي).
+  void reload() {
+    fallbackCycle = 0;
+    if (activeUrl.isEmpty) return;
+    if (mode == PlayerMode.backup) {
+      playBackup(activeUrl);
+    } else {
+      playVideo(activeUrl);
+    }
   }
 
   /// الضغط على أحد أزرار الروابط (link-chip).
@@ -519,6 +624,8 @@ class SatPlayerController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _poll?.cancel();
+    info.dispose();
     _token++;
     final p = player;
     final e = exo;
