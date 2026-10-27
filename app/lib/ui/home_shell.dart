@@ -26,6 +26,16 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
+  /// قنوات القسم الذي فُتحت منه القناة الحالية (كما في satRenderChannelCards بالموقع).
+  List<Channel> _sectionChannels(AppState s) {
+    final ch = s.currentChannel;
+    if (ch == null) return const [];
+    final ids = ch.categoryIds;
+    var cid = s.currentCategoryId ?? '';
+    if (!ids.contains(cid)) cid = ids.isNotEmpty ? ids.first : '';
+    return cid.isEmpty ? const [] : s.channelsIn(cid);
+  }
+
   final ScrollController _scroll = ScrollController();
 
   @override
@@ -118,8 +128,10 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
                 if (playerOpen)
                   Positioned.fill(
                     child: PlayerOverlay(
-                      key: ValueKey('player-${s.currentChannel!.id}'),
+                      key: const ValueKey('player'),
                       channel: s.currentChannel!,
+                      channels: _sectionChannels(s),
+                      onSelectChannel: s.openChannel,
                     ),
                   ),
                 if (s.searchOpen && !playerOpen) SearchOverlay(state: s),

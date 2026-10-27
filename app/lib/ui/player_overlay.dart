@@ -17,13 +17,22 @@ const MethodChannel _kNative = MethodChannel('app.alfaham/native');
 
 /// شاشة المشغل: أفقية بملء الشاشة بلا أشرطة نظام.
 /// ExoPlayer وMPV يتبدلان تلقائياً في الخلفية بلا أزرار لهما.
-/// أعلى اليسار: رجوع. أعلى اليمين: شعار/اسم القناة + إعادة تحميل.
+/// أعلى اليسار: أزرار روابط القناة (دوائر). أعلى اليمين: إعادة تحميل. الرجوع من زر الجهاز.
 /// وسط الشاشة (شريط عائم): ‎-10، ⚙ الجودة، بث، حجم الصورة، تشغيل/إيقاف، ملء الشاشة، نافذة عائمة، ‎+10.
-/// أسفل الشاشة: شريط التقدم ثم كروت روابط القناة.
+/// أسفل الشاشة: شريط التقدم ثم كروت قنوات القسم (صورة + اسم القناة).
 /// كل ذلك يختفي بعد 3.5 ثانية (إذا كان البث يعمل) ويعود بلمس الشاشة.
 class PlayerOverlay extends StatefulWidget {
-  const PlayerOverlay({super.key, required this.channel});
+  const PlayerOverlay({
+    super.key,
+    required this.channel,
+    this.channels = const [],
+    this.onSelectChannel,
+  });
   final Channel channel;
+
+  /// قنوات القسم الحالي (تظهر ككروت أسفل المشغل) ودالة التبديل إلى قناة منها.
+  final List<Channel> channels;
+  final ValueChanged<Channel>? onSelectChannel;
 
   @override
   State<PlayerOverlay> createState() => _PlayerOverlayState();
@@ -32,7 +41,7 @@ class PlayerOverlay extends StatefulWidget {
 class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserver {
   static const Duration _idle = Duration(milliseconds: 3500);
 
-  late final SatPlayerController _ctrl;
+  late SatPlayerController _ctrl;
   Timer? _hideTimer;
   bool _uiVisible = true;
   bool _menuOpen = false;
@@ -49,6 +58,19 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
     _enterFullscreen();
     _ctrl = SatPlayerController(channelName: widget.channel.name, links: widget.channel.links)..start();
     _scheduleHide();
+  }
+
+  @override
+  void didUpdateWidget(PlayerOverlay old) {
+    super.didUpdateWidget(old);
+    // التبديل إلى قناة أخرى من الكروت: نفس الشاشة بمشغل جديد دون الخروج من وضع ملء الشاشة.
+    if (old.channel.id != widget.channel.id) {
+      _ctrl.dispose();
+      _ctrl = SatPlayerController(channelName: widget.channel.name, links: widget.channel.links)..start();
+      _uiVisible = true;
+      _drag = null;
+      _scheduleHide();
+    }
   }
 
   void _enterFullscreen() {
@@ -311,63 +333,42 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
     );
   }
 
-  // ------------------------------------------------------------ الشريط العلوي: رجوع + شعار القناة + إعادة تحميل
+  // ------------------------------------------------------------ الشريط العلوي: روابط القناة + إعادة تحميل
 
   Widget _topBar(EdgeInsets pad) {
+    final hasLinks = _ctrl.links.length >= 2;
     return Positioned(
       top: 8,
-      left: 8 + pad.left,
+      left: 12 + pad.left,
       right: 8 + pad.right,
       child: _fade(
         Directionality(
           textDirection: TextDirection.ltr,
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _icon(Icons.arrow_back, () => Navigator.of(context).maybePop(), tip: 'رجوع', width: 48),
-              const Spacer(),
-              _logo(),
-              const SizedBox(width: 4),
+              Expanded(
+                child: hasLinks
+                    ? Align(
+                        alignment: Alignment.topLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: _LinkBar(
+                            links: _ctrl.links,
+                            activeIndex: _ctrl.linkIndex,
+                            onSelect: (i) {
+                              _ctrl.selectLink(i);
+                              _wake();
+                            },
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
               _icon(Icons.refresh, _ctrl.reload, tip: 'إعادة تحميل', width: 48),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _logo() {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 220),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: const Color.fromRGBO(0, 0, 0, .55),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (widget.channel.img.isNotEmpty) ...[
-            CachedNetworkImage(
-              imageUrl: widget.channel.img,
-              width: 24,
-              height: 24,
-              fit: BoxFit.contain,
-              errorWidget: (_, __, ___) => const SizedBox.shrink(),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Text(
-                widget.channel.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: cairo(size: 13, weight: 700),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -469,7 +470,7 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
   // ------------------------------------------------------------ الشريط السفلي: التقدم + كروت الروابط
 
   Widget _bottomBar(EdgeInsets pad) {
-    final hasLinks = _ctrl.links.length >= 2;
+    final hasChannels = widget.channels.length >= 2;
     return Positioned(
       left: 0,
       right: 0,
@@ -491,13 +492,13 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _progress(),
-                if (hasLinks) ...[
+                if (hasChannels) ...[
                   const SizedBox(height: 8),
-                  _LinkBar(
-                    links: _ctrl.links,
-                    activeIndex: _ctrl.linkIndex,
-                    onSelect: (i) {
-                      _ctrl.selectLink(i);
+                  _ChannelBar(
+                    channels: widget.channels,
+                    activeId: widget.channel.id,
+                    onSelect: (ch) {
+                      if (ch.id != widget.channel.id) widget.onSelectChannel?.call(ch);
                       _wake();
                     },
                   ),
@@ -570,7 +571,7 @@ class _PlayerOverlayState extends State<PlayerOverlay> with WidgetsBindingObserv
   }
 }
 
-/// كروت روابط القناة: أسفل الشاشة، تتمرر أفقياً عند كثرتها، والرابط الحالي بإطار مميّز.
+/// شريط روابط القناة: أعلى اليسار، يتمرر أفقياً عند كثرة الروابط.
 class _LinkBar extends StatelessWidget {
   const _LinkBar({required this.links, required this.activeIndex, required this.onSelect});
 
@@ -578,27 +579,135 @@ class _LinkBar extends StatelessWidget {
   final int activeIndex;
   final ValueChanged<int> onSelect;
 
+  static const double _fs = 13;
+
   String _labelOf(int i) => links[i].label.isNotEmpty ? links[i].label : 'رابط ${i + 1}';
+
+  double _contentWidth() {
+    var total = 20.0;
+    for (var i = 0; i < links.length; i++) {
+      final tp = TextPainter(
+        text: TextSpan(text: _labelOf(i), style: cairo(size: _fs, weight: 700)),
+        textDirection: TextDirection.rtl,
+        maxLines: 1,
+      )..layout();
+      total += tp.width + 28 + (i > 0 ? 6 : 0);
+    }
+    return total + 2;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 62,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: links.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) => _card(i),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : double.infinity;
+        final width = _contentWidth().clamp(0.0, maxW).toDouble();
+        return SizedBox(
+          width: width,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < links.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 6),
+                    _chip(i),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _card(int i) {
+  Widget _chip(int i) {
     final active = i == activeIndex;
     return GestureDetector(
       onTap: () => onSelect(i),
       child: Container(
-        width: 88,
+        constraints: const BoxConstraints(minHeight: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active ? kAmber : const Color.fromRGBO(0, 0, 0, .55),
+          borderRadius: BorderRadius.circular(999),
+          border: active ? null : Border.all(color: const Color.fromRGBO(255, 255, 255, .3)),
+        ),
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Text(
+            _labelOf(i),
+            maxLines: 1,
+            style: cairo(size: _fs, weight: 700, color: active ? Colors.black : Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// كروت قنوات القسم: أسفل الشاشة، صورة القناة واسمها كما في القسم، والقناة الحالية بإطار مميّز.
+class _ChannelBar extends StatefulWidget {
+  const _ChannelBar({required this.channels, required this.activeId, required this.onSelect});
+
+  final List<Channel> channels;
+  final String activeId;
+  final ValueChanged<Channel> onSelect;
+
+  @override
+  State<_ChannelBar> createState() => _ChannelBarState();
+}
+
+class _ChannelBarState extends State<_ChannelBar> {
+  static const double _w = 92;
+  static const double _gap = 8;
+  final ScrollController _sc = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _centerActive());
+  }
+
+  void _centerActive() {
+    if (!mounted || !_sc.hasClients) return;
+    final i = widget.channels.indexWhere((c) => c.id == widget.activeId);
+    if (i < 0) return;
+    final target = i * (_w + _gap) - (_sc.position.viewportDimension - _w) / 2;
+    _sc.jumpTo(target.clamp(0.0, _sc.position.maxScrollExtent).toDouble());
+  }
+
+  @override
+  void dispose() {
+    _sc.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 76,
+      child: ListView.separated(
+        controller: _sc,
+        scrollDirection: Axis.horizontal,
+        itemCount: widget.channels.length,
+        separatorBuilder: (_, __) => const SizedBox(width: _gap),
+        itemBuilder: (_, i) => _card(widget.channels[i]),
+      ),
+    );
+  }
+
+  Widget _card(Channel ch) {
+    final active = ch.id == widget.activeId;
+    return GestureDetector(
+      onTap: () => widget.onSelect(ch),
+      child: Container(
+        width: _w,
         padding: const EdgeInsets.fromLTRB(5, 5, 5, 3),
         decoration: BoxDecoration(
           color: active ? const Color.fromRGBO(255, 193, 7, .22) : const Color.fromRGBO(255, 255, 255, .12),
@@ -610,22 +719,24 @@ class _LinkBar extends StatelessWidget {
             Expanded(
               child: Container(
                 width: double.infinity,
-                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: active ? kAmber : const Color.fromRGBO(255, 255, 255, .18),
+                  color: const Color.fromRGBO(0, 0, 0, .35),
                   borderRadius: BorderRadius.circular(5),
                 ),
-                child: Text(
-                  '${i + 1}',
-                  style: cairo(size: 15, weight: 900, color: active ? Colors.black : Colors.white),
-                ),
+                child: ch.img.isEmpty
+                    ? const SizedBox.shrink()
+                    : CachedNetworkImage(
+                        imageUrl: ch.img,
+                        fit: BoxFit.contain,
+                        errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                      ),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Directionality(
               textDirection: TextDirection.rtl,
               child: Text(
-                _labelOf(i),
+                ch.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: cairo(size: 11, weight: 700),
