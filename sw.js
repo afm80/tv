@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'alfaham-tv-cache-';
-const CACHE_NAME = `${CACHE_PREFIX}v11`;
-const ASSETS = ['./', './index.html', './admin.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-1024.png'];
+const CACHE_NAME = `${CACHE_PREFIX}v12`;
+const ASSETS = ['./', './index.html', './admin.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-1024.png', './background.png'];
 
 self.addEventListener('install', event => {
     event.waitUntil(
