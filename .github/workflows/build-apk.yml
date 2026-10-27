@@ -1,0 +1,86 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - 'app/**'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Prepare Android project
+        working-directory: app
+        run: |
+          flutter --version
+          # ننشئ هيكل أندرويد في مجلد مؤقت ثم ننسخه، فلا يمس ملفات التطبيق (lib / pubspec).
+          flutter create --platforms=android --org com.alfaham --project-name alfaham_tv --no-pub "$RUNNER_TEMP/scaffold"
+          rm -rf android
+          cp -r "$RUNNER_TEMP/scaffold/android" android
+          python3 tool/patch_android.py android
+          # مفتاح توقيع ثابت: يسمح بتحديث التطبيق فوق النسخة القديمة دون حذفها.
+          mkdir -p ~/.android
+          cp tool/debug.keystore ~/.android/debug.keystore
+
+      - name: Install packages
+        working-directory: app
+        run: flutter pub get
+
+      - name: Run tests
+        working-directory: app
+        continue-on-error: true
+        run: flutter test
+
+      - name: Build APK (universal)
+        working-directory: app
+        run: flutter build apk --release
+
+      - name: Build APKs (per CPU, smaller)
+        working-directory: app
+        run: flutter build apk --release --split-per-abi
+
+      - name: Collect files
+        run: |
+          mkdir -p dist
+          cp app/build/app/outputs/flutter-apk/app-release.apk dist/AlfahamTV.apk
+          cp app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/AlfahamTV-arm64-v8a.apk
+          cp app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/AlfahamTV-armeabi-v7a.apk
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AlfahamTV-apk
+          path: dist/*.apk
+
+      - name: Publish to Releases (direct download link)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: Alfaham TV (latest APK)
+          body: |
+            أحدث نسخة من تطبيق أندرويد. حمّل `AlfahamTV.apk` وثبّته (يعمل على كل الأجهزة).
+            النسختان الأصغر: `arm64-v8a` لمعظم الهواتف الحديثة، و`armeabi-v7a` للهواتف القديمة.
+          files: dist/*.apk
