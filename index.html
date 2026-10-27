@@ -545,18 +545,34 @@ body {
 #satPlayer .link-chip{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.3);}
 #satPlayer .link-chip:hover{background:rgba(0,0,0,.7);}
 #satPlayer .link-chip.active{background:#ffc107;color:#000;border-color:#ffc107;}
-#satUi{position:absolute;left:0;right:0;bottom:0;z-index:7;direction:ltr;padding:30px calc(12px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(0,0,0,.78),rgba(0,0,0,0));transition:opacity .3s ease;}
-#satUi.idle{opacity:0;pointer-events:none;}
-#satUi .sat-row{display:flex;justify-content:center;align-items:center;gap:6px;}
-#satUi .sb{position:relative;width:56px;height:44px;padding:0;border:0;background:transparent;color:#fff;font-size:22px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+#satUi{position:absolute;inset:0;z-index:7;direction:ltr;pointer-events:none;transition:opacity .3s ease;}
+#satUi>*{pointer-events:auto;}
+#satUi.idle{opacity:0;}
+#satUi.idle>*{pointer-events:none;}
+#satUi .sb{position:relative;width:48px;height:48px;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;font-size:21px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background .15s;}
+#satUi .sb:hover{background:rgba(255,255,255,.18);}
+#satUi .sb:focus-visible{outline:2px solid #ffc107;}
+#satUi .sb.big{font-size:26px;}
 #satUi .sb b{position:absolute;left:50%;top:50%;transform:translate(-50%,-42%);font-size:8px;font-weight:700;pointer-events:none;}
 #satUi .sb:active{transform:scale(.9);}
-#satUi .sb-gap{width:22px;}
+/* أعلى: رجوع + شعار القناة + إعادة تحميل */
+#satUi .sat-top{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));display:flex;align-items:center;gap:6px;pointer-events:none;}
+#satUi .sat-top>*{pointer-events:inherit;}
+#satUi .sat-spacer{flex:1;}
+#satUi .sat-logo{display:flex;align-items:center;gap:8px;max-width:50%;padding:5px 10px;border-radius:8px;background:rgba(0,0,0,.55);font-size:13px;font-weight:700;direction:rtl;color:#fff;}
+#satUi .sat-logo img{width:24px;height:24px;object-fit:contain;}
+#satUi .sat-logo img[src='']{display:none;}
+#satUi .sat-logo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* وسط: شريط الأزرار العائم */
+#satUi .sat-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:2px;pointer-events:inherit;}
 #satUi .quality-menu{position:relative;display:inline-flex;}
-#satUi .quality-toggle{width:56px;height:44px;min-height:0;padding:0;border:0;border-radius:0;background:transparent;color:#fff;font-size:22px;align-items:center;justify-content:center;}
-#satUi .quality-toggle:hover{background:transparent;color:#fff;}
+#satUi .quality-toggle{display:inline-flex !important;width:48px;height:48px;min-height:0;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;font-size:21px;align-items:center;justify-content:center;}
+#satUi .quality-toggle:hover{background:rgba(255,255,255,.18);color:#fff;}
 #satUi .quality-options{bottom:calc(100% + 6px);right:50%;transform:translateX(50%);direction:rtl;}
+#satUi .quality-options:empty::before{content:'لا توجد خيارات جودة';display:block;padding:7px 9px;color:#fff;font-size:13px;font-weight:700;white-space:nowrap;}
 #satUi .quality-options button.on{color:#ffc107;}
+/* أسفل: التقدم + كروت الروابط */
+#satUi .sat-bottom{position:absolute;left:0;right:0;bottom:0;padding:30px calc(12px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(0,0,0,.8),rgba(0,0,0,0));pointer-events:inherit;}
 #satUi .sat-prog{display:flex;align-items:center;gap:8px;height:22px;margin-top:2px;color:#fff;font-size:12px;font-weight:700;}
 #satUi .sat-prog input[type=range]{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:3px;margin:0;border-radius:2px;outline:none;background:linear-gradient(to right,#e62117 var(--p,0%),rgba(255,255,255,.3) var(--p,0%));}
 #satUi .sat-prog input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:#e62117;border:0;}
@@ -564,6 +580,18 @@ body {
 #satUi .sat-live{display:none;flex:1;height:3px;border-radius:2px;background:#e62117;}
 #satUi .sat-prog.live input[type=range],#satUi .sat-prog.live #satTimeCur,#satUi .sat-prog.live #satTimeTot{display:none;}
 #satUi .sat-prog.live .sat-live{display:block;}
+/* كروت الروابط: داخل الشريط السفلي، وتختفي مع باقي الواجهة */
+#playerContainer #satPlayer #satUi .sat-link-buttons{position:static;top:auto;left:auto;max-width:none;margin-top:8px;padding:0;opacity:1;transform:none;pointer-events:inherit;transition:none;}
+#playerContainer #satPlayer #satUi .sat-link-buttons.idle{opacity:1;transform:none;pointer-events:inherit;}
+#playerContainer #satPlayer #satUi .link-chip{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:3px;width:84px;min-height:58px;padding:5px 5px 3px;border-radius:8px;border:2px solid transparent;background:rgba(255,255,255,.12);text-shadow:none;}
+#playerContainer #satPlayer #satUi .link-chip:hover{background:rgba(255,255,255,.2);}
+#playerContainer #satPlayer #satUi .link-chip .lc-n{display:block;height:28px;line-height:28px;border-radius:5px;background:rgba(255,255,255,.18);font-size:15px;font-weight:900;text-align:center;}
+#playerContainer #satPlayer #satUi .link-chip .lc-t{display:block;font-size:11px;font-weight:700;text-align:center;overflow:hidden;text-overflow:ellipsis;}
+#playerContainer #satPlayer #satUi .link-chip.active{background:rgba(255,193,7,.22);border-color:#ffc107;color:#fff;}
+#playerContainer #satPlayer #satUi .link-chip.active .lc-n{background:#ffc107;color:#000;}
+.sat-toast{position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:8;padding:6px 14px;border-radius:20px;background:rgba(0,0,0,.7);color:#fff;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .25s;}
+.sat-toast.show{opacity:1;}
+@media (max-width:600px){#satUi .sb,#satUi .quality-toggle{width:40px;height:40px;font-size:18px;}#satUi .sat-center{gap:0;}#playerContainer #satPlayer #satUi .link-chip{width:72px;}}
 
 
 .matches-table-container,
@@ -806,22 +834,31 @@ body {
         <video id="satVideoEl" autoplay playsinline></video>
         <div class="player-loader" id="satPlayerLoader"><div class="splash-spinner"></div><div>جاري تشغيل القناة...</div></div>
         <div class="player-failure" id="satPlayerFailure"><p>⚠ تعذر تشغيل القناة حالياً.</p><button type="button" id="satRetryLoaderBtn">إعادة المحاولة</button></div>
-        <div class="sat-link-buttons" id="satLinkButtons" role="tablist" aria-label="روابط القناة"></div>
+        <div class="sat-toast" id="satToast"></div>
         <div class="sat-ui" id="satUi">
-          <div class="sat-row" id="satRow">
-            <button type="button" class="sb" id="satBtnBack" aria-label="رجوع 10 ثوانٍ"><i class="fa-solid fa-rotate-left"></i><b>10</b></button>
-            <button type="button" class="sb" id="satBtnPlay" aria-label="تشغيل / إيقاف"><i class="fa-solid fa-pause"></i></button>
-            <button type="button" class="sb" id="satBtnFwd" aria-label="تقديم 10 ثوانٍ"><i class="fa-solid fa-rotate-right"></i><b>10</b></button>
-            <span class="sb-gap"></span>
+          <div class="sat-top">
+            <button type="button" class="sb" id="satBtnExit" aria-label="رجوع"><i class="fa-solid fa-arrow-left"></i></button>
+            <span class="sat-spacer"></span>
+            <div class="sat-logo" id="satLogo"><img id="satLogoImg" alt="" src=""><span id="satLogoName"></span></div>
             <button type="button" class="sb" id="satBtnReload" aria-label="إعادة تحميل"><i class="fa-solid fa-arrows-rotate"></i></button>
-            <button type="button" class="sb" id="satBtnFit" aria-label="حجم الصورة"><i class="fa-solid fa-expand"></i></button>
-            <button type="button" class="sb" id="satBtnPip" aria-label="نافذة عائمة"><i class="fa-regular fa-window-restore"></i></button>
           </div>
-          <div class="sat-prog" id="satProg">
-            <span id="satTimeCur">00:00</span>
-            <input type="range" id="satSeek" min="0" max="100" step="any" value="0" aria-label="شريط التقدم">
-            <span class="sat-live" id="satLive"></span>
-            <span id="satTimeTot">00:00</span>
+          <div class="sat-center" id="satRow">
+            <button type="button" class="sb" id="satBtnBack" aria-label="رجوع 10 ثوانٍ"><i class="fa-solid fa-rotate-left"></i><b>10</b></button>
+            <button type="button" class="sb" id="satBtnCast" aria-label="بث"><i class="fa-brands fa-chromecast"></i></button>
+            <button type="button" class="sb" id="satBtnFit" aria-label="حجم الصورة"><i class="fa-solid fa-expand"></i></button>
+            <button type="button" class="sb big" id="satBtnPlay" aria-label="تشغيل / إيقاف"><i class="fa-solid fa-pause"></i></button>
+            <button type="button" class="sb" id="satBtnFs" aria-label="ملء الشاشة"><i class="fa-solid fa-maximize"></i></button>
+            <button type="button" class="sb" id="satBtnPip" aria-label="نافذة عائمة"><i class="fa-regular fa-window-restore"></i></button>
+            <button type="button" class="sb" id="satBtnFwd" aria-label="تقديم 10 ثوانٍ"><i class="fa-solid fa-rotate-right"></i><b>10</b></button>
+          </div>
+          <div class="sat-bottom">
+            <div class="sat-prog" id="satProg">
+              <span id="satTimeCur">00:00</span>
+              <input type="range" id="satSeek" min="0" max="100" step="any" value="0" aria-label="شريط التقدم">
+              <span class="sat-live" id="satLive"></span>
+              <span id="satTimeTot">00:00</span>
+            </div>
+            <div class="sat-link-buttons" id="satLinkButtons" role="tablist" aria-label="روابط القناة"></div>
           </div>
         </div>
       </div>
@@ -922,7 +959,10 @@ function setupLinkButtons(links) {
         button.type = 'button';
         button.setAttribute('role', 'tab');
         button.className = 'link-chip' + (index === currentLinkIndex ? ' active' : '');
-        button.textContent = link.label || `رابط ${index + 1}`;
+        const lbl = link.label || `رابط ${index + 1}`;
+        const num = document.createElement('span'); num.className = 'lc-n'; num.textContent = index + 1;
+        const txt = document.createElement('span'); txt.className = 'lc-t'; txt.textContent = lbl;
+        button.append(num, txt);
         button.title = link.label || `رابط ${index + 1}`;
         button.onclick = event => {
             event.stopPropagation();
@@ -992,6 +1032,7 @@ async function selectChannel(channel, pushHistory = true) {
     currentChannelLinks = links;
     currentChannelName = channel.name || '';
     currentChannelImg = channel.img || '';
+    if (window.satSetLogo) window.satSetLogo(currentChannelName, currentChannelImg);
     currentLinkIndex = 0;
     const engineSelect = $('satEngineSelect');
     if (engineSelect) engineSelect.value = 'auto';
@@ -1894,7 +1935,7 @@ function openMatchLink(url) {
 
   /* نقل زر ⚙ الجودة إلى الصف السفلي */
   var qm=document.querySelector('#satPlayer .quality-menu'),qt=$('satQualityToggle');
-  if(qm&&qt){qt.innerHTML='<i class="fa-solid fa-gear"></i>';row.insertBefore(qm,$('satBtnFit'));}
+  if(qm&&qt){qt.innerHTML='<i class="fa-solid fa-gear"></i>';row.insertBefore(qm,$('satBtnCast'));}
 
   function media(){return wrap.querySelector('[data-player-host] video')||satVideoEl;}
   function fmt(s){s=Math.max(0,Math.floor(s||0));var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;var p=function(n){return n<10?'0'+n:''+n;};return (h?h+':':'')+p(m)+':'+p(x);}
@@ -1902,7 +1943,8 @@ function openMatchLink(url) {
   /* إظهار/إخفاء بعد 3.5 ثانية */
   function hide(){
     var m=media(),open=$('satQualityOptions')&&$('satQualityOptions').classList.contains('open');
-    if(open||(m&&m.paused&&!m.ended&&m.readyState>0)){timer=setTimeout(hide,IDLE);return;}
+    var bottom=ui.querySelector('.sat-bottom');
+    if(open||(m&&m.paused&&!m.ended&&m.readyState>0)||(!touch&&bottom&&bottom.matches(':hover'))){timer=setTimeout(hide,IDLE);return;}
     ui.classList.add('idle');
   }
   function wake(){ui.classList.remove('idle');clearTimeout(timer);timer=setTimeout(hide,IDLE);}
@@ -1928,7 +1970,37 @@ function openMatchLink(url) {
 
   /* حجم الصورة: ملائم / ملء / تمديد */
   var fits=['contain','cover','fill'],fitI=0;
-  $('satBtnFit').onclick=function(){fitI=(fitI+1)%fits.length;wrap.style.setProperty('--sat-fit',fits[fitI]);};
+  var fitNames=['الحجم الأصلي','ملء الشاشة','تمديد'];
+  $('satBtnFit').onclick=function(){fitI=(fitI+1)%fits.length;wrap.style.setProperty('--sat-fit',fits[fitI]);toast(fitNames[fitI]);};
+
+  /* رسالة قصيرة */
+  var toastT=null;
+  function toast(t){var e=$('satToast');if(!e)return;e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){e.classList.remove('show');},1400);}
+
+  /* رجوع (يغلق المشغل) */
+  $('satBtnExit').onclick=function(){window.history.back();};
+
+  /* بث (Remote Playback API حيث يدعمه المتصفح) */
+  $('satBtnCast').onclick=function(){
+    var m=media();
+    if(m&&m.remote&&m.remote.prompt){m.remote.prompt().catch(function(e){toast(e&&e.name==='NotFoundError'?'لا توجد أجهزة متاحة':'البث غير مدعوم لهذا الرابط');});}
+    else toast('البث غير مدعوم في هذا المتصفح');
+  };
+
+  /* ملء الشاشة */
+  var fsBtn=$('satBtnFs');
+  function isFs(){return document.fullscreenElement||document.webkitFullscreenElement;}
+  if(!(pc.requestFullscreen||pc.webkitRequestFullscreen))fsBtn.style.display='none';
+  fsBtn.onclick=function(){
+    try{
+      if(isFs())(document.exitFullscreen||document.webkitExitFullscreen).call(document);
+      else (pc.requestFullscreen||pc.webkitRequestFullscreen).call(pc);
+    }catch(e){}
+  };
+  ['fullscreenchange','webkitfullscreenchange'].forEach(function(ev){document.addEventListener(ev,function(){fsBtn.firstChild.className='fa-solid '+(isFs()?'fa-compress':'fa-maximize');});});
+
+  /* شعار القناة */
+  window.satSetLogo=function(name,img){$('satLogoName').textContent=name||'';var i=$('satLogoImg');i.src=img||'';};
 
   /* نافذة عائمة */
   var pipBtn=$('satBtnPip');
